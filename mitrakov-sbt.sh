@@ -34,7 +34,7 @@ cat <<EOF >src/main/scala/com/mitrakov/sandbox/$NAME/Main.scala
 package com.mitrakov.sandbox.$NAME
 
 object Main extends App {
-  println("Hello world")
+  println("\n\nHello world\n\n")
 }
 EOF
 

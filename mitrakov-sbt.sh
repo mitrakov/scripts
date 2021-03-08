@@ -1,13 +1,13 @@
 #!/bin/bash
 
-set -e    # ignore the rest of the script in case of errors
 clear
+set -e    # ignore the rest of the script in case of errors
 
 echo "This script will create a simple Scala Project"
 echo "by: @mitrakov (https://github.com/mitrakov)"
 echo
 echo -n "Project name:"
-read
+read </dev/tty
 NAME=$REPLY
 
 ## build.sbt file ##

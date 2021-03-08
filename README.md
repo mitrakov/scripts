@@ -1,0 +1,2 @@
+# scripts
+Bash automatization scripts

@@ -3,6 +3,16 @@
 clear
 set -e    # ignore the rest of the script in case of errors
 
+# checking environment
+if ! [ `which java` ]; then
+  echo "You have no java installed. Please install jdk first"
+  exit -1
+fi
+if ! [ `which sbt` ]; then
+  echo "You have no sbt installed. Please install sbt first"
+  exit -1
+fi
+
 echo "This script will create a simple Scala Project"
 echo "by: @mitrakov (https://github.com/mitrakov)"
 echo

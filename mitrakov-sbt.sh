@@ -1,9 +1,11 @@
 #!/bin/bash
 
 set -e    # ignore the rest of the script in case of errors
+clear
 
 echo "This script will create a simple Scala Project"
-echo "  by: @mitrakov (https://github.com/mitrakov)"
+echo "by: @mitrakov (https://github.com/mitrakov)"
+echo
 echo -n "Project name:"
 read
 NAME=$REPLY
@@ -26,6 +28,7 @@ EOF
 ## project structure ##
 mkdir -p src/main/scala/com/mitrakov/sandbox/$NAME
 mkdir -p src/test/scala/com/mitrakov/sandbox/$NAME
+mkdir -p src/main/resources
 
 cat <<EOF >src/main/scala/com/mitrakov/sandbox/$NAME/Main.scala
 package com.mitrakov.sandbox.$NAME

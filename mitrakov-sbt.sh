@@ -19,19 +19,23 @@ echo
 echo -n "Project name:"
 read </dev/tty
 NAME=$REPLY
+echo
+echo -n "Full package name:"
+read </dev/tty
+PACKAGE=$REPLY
 
 ## build.sbt file ##
 cat <<EOF >build.sbt
 name := "$NAME"
-organization := "com.mitrakov.sandbox"
+organization := "$PACKAGE"
 version := "1.0.0"
-scalaVersion := "2.13.4"
+scalaVersion := "2.13.6"
 
 libraryDependencies ++= Seq(
-  "com.typesafe" % "config" % "1.4.0",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
-  "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime,
-  "org.scalatest" %% "scalatest" % "3.2.0" % Test,
+  "com.typesafe" % "config" % "1.4.1",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
+  "ch.qos.logback" % "logback-classic" % "1.2.5" % Runtime,
+  "org.scalatest" %% "scalatest" % "3.2.9" % Test,
 )
 EOF
 

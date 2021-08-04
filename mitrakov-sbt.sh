@@ -19,7 +19,6 @@ echo
 echo -n "Project name:"
 read </dev/tty
 NAME=$REPLY
-echo
 echo -n "Full package name:"
 read </dev/tty
 PACKAGE=$REPLY

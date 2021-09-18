@@ -16,12 +16,13 @@ fi
 echo "This script will create a simple Scala Project"
 echo "by: @mitrakov (https://github.com/mitrakov)"
 echo
-echo -n "Project name:"
+echo -ne "\033[32mProject name:\033[0m"
 read </dev/tty
 NAME=$REPLY
-echo -n "Full package name:"
+echo -ne "\033[32mFull package name:\033[0m"
 read </dev/tty
 PACKAGE=$REPLY
+DIRPATH=$(echo $PACKAGE | sed "s/\./\//g")
 
 ## build.sbt file ##
 cat <<EOF >build.sbt
@@ -39,12 +40,12 @@ libraryDependencies ++= Seq(
 EOF
 
 ## project structure ##
-mkdir -p src/main/scala/com/mitrakov/sandbox/$NAME
-mkdir -p src/test/scala/com/mitrakov/sandbox/$NAME
+mkdir -p src/main/scala/$DIRPATH/$NAME
+mkdir -p src/test/scala/$DIRPATH/$NAME
 mkdir -p src/main/resources
 
-cat <<EOF >src/main/scala/com/mitrakov/sandbox/$NAME/Main.scala
-package com.mitrakov.sandbox.$NAME
+cat <<EOF >src/main/scala/$DIRPATH/$NAME/Main.scala
+package $PACKAGE.$NAME
 
 object Main extends App {
   println("\n\nHello world\n\n")

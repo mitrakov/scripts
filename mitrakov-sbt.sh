@@ -29,7 +29,7 @@ cat <<EOF >build.sbt
 name := "$NAME"
 organization := "$PACKAGE"
 version := "1.0.0"
-scalaVersion := "2.13.6"
+scalaVersion := "2.13.7"
 
 libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.4.1",
@@ -67,6 +67,8 @@ cat <<EOF >src/main/resources/logback.xml
 </configuration>
 EOF
 
+## application.conf ##
+echo "" > src/main/resources/application.conf
+
 ## building ##
-sbt compile
-sbt run
+sbt compile run

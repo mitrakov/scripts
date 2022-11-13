@@ -34,7 +34,7 @@ scalaVersion := "2.13.7"
 libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.4.2",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
-  "ch.qos.logback" % "logback-classic" % "1.4.4"/* % Runtime*/,
+  "ch.qos.logback" % "logback-classic" % "1.4.4" % Runtime,
   "org.scalatest" %% "scalatest" % "3.2.9" % Test,
 )
 EOF

@@ -7,8 +7,7 @@ if ! [ `which ffmpeg` ]; then
   exit
 fi
 
-#for i in *.avi *.mp4 *.mpg *.mov *.mkv *.flv *.webm; do
-for i in *.mp4 *.mpg *.mov *.mkv *.webm; do
+for i in *.avi *.mp4 *.mpg *.mov *.mkv *.flv *.webm; do
   [ -f "$i" ] || continue     # guard for empty array
   extension="${i##*.}"        # https://stackoverflow.com/a/965072/2212849
   echo

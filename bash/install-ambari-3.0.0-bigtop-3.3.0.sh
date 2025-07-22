@@ -141,7 +141,7 @@ setup_hostname() {
     section "Hostname Configuration"
     
     info "Current hostname: $(hostname)"
-    read -p "Enter new hostname for this server (e.g., centos1.host) or press Enter to skip: " HOSTNAME
+    read -p "Enter new hostname for this server (from your '$INPUT_FILE' file): " HOSTNAME
     
     if [[ -n "$HOSTNAME" ]]; then
         hostnamectl set-hostname "$HOSTNAME"
@@ -297,7 +297,7 @@ common_setup() {
 setup_ambari_repo() {
     section "Ambari Repository Setup"
     
-    read -p "Enter the repository hostname (e.g., 192.168.1.99): " REPO_HOST
+    read -p "Enter the repository hostname (from your '$INPUT_FILE' file): " REPO_HOST
     if [[ -z "$REPO_HOST" ]]; then
         error "Repository hostname is required"
     fi
@@ -550,12 +550,7 @@ show_summary() {
     
     if [[ -n "${HOSTNAME_CHANGED:-}" ]]; then
         echo
-        warn "Hostname was changed during installation"
-        read -p "Re-login is recommended. Logout now? (y/N): " -r
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            log "Good bye..."
-            logout
-        fi
+        warn "Hostname was changed during installation. Re-login is recommended"
     fi
     
     echo

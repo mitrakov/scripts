@@ -57,8 +57,7 @@ section() {
 # Check command line arguments
 check_args() {
   if [[ $# -ne 1 ]]; then
-    error "Usage: $0 <input-file>"
-    echo "File should contain lines like: <IP> <hostname>"
+    error "Usage: $0 <hosts-file>;        File should contain lines like: <IP> <hostname>"
     exit 1
   fi
   
@@ -297,7 +296,7 @@ common_setup() {
 setup_ambari_repo() {
     section "Ambari Repository Setup"
     
-    read -p "Enter the repository hostname (from your '$INPUT_FILE' file): " REPO_HOST
+    read -p "Enter the repository hostname or IP address: " REPO_HOST
     if [[ -z "$REPO_HOST" ]]; then
         error "Repository hostname is required"
     fi
@@ -377,25 +376,28 @@ start_ambari_server() {
 apply_agent_fixes() {
     section "Installing Ambari Agent missing packages"
     
-    # Fix 1: Install python3-distro for ModuleNotFoundError
+    # Fix 1: ModuleNotFoundError: No module named 'distro'
     log "Fix 1: Installing python3-distro..."
-    if command -v dnf &> /dev/null; then
-        dnf install -y python3-distro
-    else
-        yum install -y python3-distro
-    fi
+    dnf install -y python3-distro
     log "python3-distro installed successfully"
     
-    # Fix 2: Enable CRB repository for libtirpc-devel
+    # Fix 2: dnf libtirpc-devel not found
     log "Fix 2: Enabling CRB repository..."
     if command -v dnf &> /dev/null; then
         dnf config-manager --set-enabled crb || warn "CRB repository may already be enabled or not available"
     fi
     log "CRB repository configuration completed"
     
-    # Fix 3: Install LSB packages for Hadoop
-    log "Fix 3: Installing LSB packages for Hadoop..."
+    # Fix 3: nothing provides /lib/lsb/init-functions needed by hadoop_3_3_0
+    # Root cause: RHEL-9 removed LSB packages at all
+    log "Fix 3: Installing 'redhat-lsb-core' packages for Hadoop..."
     install_lsb_packages
+
+    # Fix 4: Error unpacking rpm package chkconfig-1.24-2.el9.x86_64
+    # Root cause: /etc/init.d should be a symlink to "rc.d/init.d", but Ambari creates a new directory instead
+    # As a result, package "chkconfig" fails to install
+    log "Fix 4: Installing package chkconfig..."
+    dnf install -y chkconfig
     
     log "All extra agent packages have been installed successfully"
     echo
@@ -599,14 +601,6 @@ show_summary() {
     
     info "Installation completed successfully!"
     info "Log file: ${LOG_FILE}"
-    
-    if [[ -n "${HOSTNAME_CHANGED:-}" ]]; then
-        echo
-        warn "Hostname was changed during installation. Re-login is recommended"
-    fi
-    
-    echo
-    info "For troubleshooting, check the log file: ${LOG_FILE}"
 }
 
 # Main function

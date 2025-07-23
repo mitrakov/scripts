@@ -97,18 +97,19 @@ show_menu() {
     echo "1. Install Ambari-Server"
     echo "2. Install Ambari-Agent"
     echo "3. Install Repository"
-    echo "4. Install BitTop patches for Ambari-Agents (only after deployment launch)"
-    echo "5. Exit"
+    echo "4. Install patch for Ambari-Agents HDFS-Router (all nodes, only after deployment launch)"
+    echo "5. Install patch for Ambari-Agent with Kafka-Broker (only 1 node, once Kafka-Broker installed)"
+    echo "6. Exit"
     echo
 }
 
 # Get user choice
 get_user_choice() {
     while true; do
-        read -p "Please select an option (1-5): " choice
+        read -p "Please select an option (1-6): " choice
         case $choice in
-            [1-5]) break ;;
-            *) echo "Invalid option. Please select 1-5." ;;
+            [1-6]) break ;;
+            *) echo "Invalid option. Please select 1-6." ;;
         esac
     done
     echo "$choice"
@@ -449,7 +450,7 @@ patch_distro_select_for_dfsrouter() {
     local NEW_ENTRY='           "hadoop-hdfs-dfsrouter": "hadoop-hdfs",'
     local INSERT_AFTER_PATTERN='           "hadoop-hdfs-zkfc": "hadoop-hdfs",' # Insert after this line
 
-    echo "Attempting to patch ${DISTRO_SELECT_FILE}..."
+    log "Attempting to patch ${DISTRO_SELECT_FILE}..."
 
     # Check if the distro-select.py file exists
     if [ ! -f "${DISTRO_SELECT_FILE}" ]; then
@@ -482,9 +483,11 @@ patch_distro_select_for_dfsrouter() {
 patch_kafka_java_path() {
     local file_path="/usr/bigtop/current/kafka-broker/bin/kafka-run-class.sh"
 
+    log "Attempting to patch ${file_path}..."
+
     # Check if file exists
     if [ ! -f "$file_path" ]; then
-        echo "File $file_path does not exist on THIS node, skipping..."
+        echo "File $file_path does not exist. Locate another node with Kafka-Broker installed. Skipping patch"
         return 0
     fi
 
@@ -583,18 +586,6 @@ EOF
   curl -s "$REPO_HOST" > /dev/null && info "Nginx serving Ambari repo."
 }
 
-# Bug fixes for Bigtop
-bug_fix_bigtop() {
-    section "Installing patches for BigTop 3.3.0 bugs"
-
-    log "Patch hadoop_hdfs_dfsrouter bug: /usr/lib/bigtop-select/distro-select"
-    patch_distro_select_for_dfsrouter
-    log "Patch kafka-broker JAVA_HOME bug: /usr/bigtop/current/kafka-broker/bin/kafka-run-class.sh"
-    patch_kafka_java_path
-
-    info "Patches completed..."
-}
-
 # Show final summary
 show_summary() {
     section "Installation Summary"
@@ -642,11 +633,16 @@ main() {
                 break
                 ;;
             4)
-                log "Selected: Install BitTop patches"
-                bug_fix_bigtop
+                log "Selected: Install patch for HDFS-Router"
+                patch_distro_select_for_dfsrouter
                 break
                 ;;
             5)
+                log "Selected: Install patch for Kafka-Broker"
+                patch_kafka_java_path
+                break
+                ;;
+            6)
                 log "Exiting installation"
                 exit 0
                 ;;

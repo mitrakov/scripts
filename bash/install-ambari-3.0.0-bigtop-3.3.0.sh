@@ -98,7 +98,7 @@ show_menu() {
     echo "1. Install Ambari-Server"
     echo "2. Install Ambari-Agent"
     echo "3. Install Repository"
-    echo "4. Bugfix for agents: 'The package hadoop-hdfs-dfsrouter is not supported'"
+    echo "4. Install BitTop patches for Ambari-Agents (only after deployment launch)"
     echo "5. Exit"
     echo
 }
@@ -476,6 +476,44 @@ patch_distro_select_for_dfsrouter() {
     fi
 }
 
+# This will fix Kafka Java path
+patch_kafka_java_path() {
+    local file_path="/usr/bigtop/current/kafka-broker/bin/kafka-run-class.sh"
+
+    # Check if file exists
+    if [ ! -f "$file_path" ]; then
+        echo "File $file_path does not exist on THIS node, skipping..."
+        return 0
+    fi
+
+    # Check if the pattern exists in the file
+    if ! grep -q 'JAVA="java"' "$file_path"; then
+        echo "Warning: Pattern 'JAVA=\"java\"' not found in file"
+        echo "File may already be modified or have different content"
+        return 0
+    fi
+
+    # Before
+    echo -e "\nBefore:"
+    grep -B 2 -A 2 -F "JAVA=" "$file_path"
+
+    # Perform the replacement
+    echo "Updating Java path in $file_path"
+    sed -i 's|JAVA="java"|JAVA="/usr/jdk64/jdk8/bin/java"|g' "$file_path"
+
+    if [ $? -eq 0 ]; then
+        echo "Successfully updated Java path"
+
+        # Show the change
+        echo -e "\nVerifying change:"
+        grep -B 2 -A 2 -F "JAVA=" "$file_path"
+    else
+        echo "Error: Failed to update file"
+        return 1
+    fi
+}
+
+
 # Install server
 install_server() {
     common_setup
@@ -496,7 +534,9 @@ install_agent() {
     apply_agent_fixes
     
     section "Agent Installation Completed"
-    warn "If you see the error: 'The package hadoop-hdfs-dfsrouter is not supported by this version of the stack-select tool'"
+    echo
+    warn "If you see an error: 'The package hadoop-hdfs-dfsrouter is not supported by this version of the stack-select tool'"
+    warn "If you see an error: '/usr/bigtop/current/kafka-broker/bin/kafka-run-class.sh java not found'"
     warn "Run this script again with option '4'"
     echo
     info "Make sure to configure passwordless SSH key on each agent"
@@ -539,6 +579,18 @@ EOF
   firewall-cmd --reload
 
   curl -s "$REPO_HOST" > /dev/null && info "Nginx serving Ambari repo."
+}
+
+# Bug fixes for Bigtop
+bug_fix_bigtop() {
+    section "Installing patches for BigTop 3.3.0 bugs"
+
+    log "Patch hadoop_hdfs_dfsrouter bug: /usr/lib/bigtop-select/distro-select"
+    patch_distro_select_for_dfsrouter
+    log "Patch kafka-broker JAVA_HOME bug: /usr/bigtop/current/kafka-broker/bin/kafka-run-class.sh"
+    patch_kafka_java_path
+
+    info "Patches completed..."
 }
 
 # Show final summary
@@ -596,8 +648,8 @@ main() {
                 break
                 ;;
             4)
-                log "Selected: Bugfix for agents (hadoop-hdfs-dfsrouter)"
-                patch_distro_select_for_dfsrouter
+                log "Selected: Install BitTop patches"
+                bug_fix_bigtop
                 break
                 ;;
             5)

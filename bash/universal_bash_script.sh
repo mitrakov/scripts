@@ -87,7 +87,7 @@ function check_args() {
     INPUT_FILE="$1"
     
     if [[ ! -f "$INPUT_FILE" ]]; then
-        error "File not found: ${INPUT_FILE}"
+        error "File not found: $INPUT_FILE"
         exit 4
     fi
 }
@@ -117,7 +117,7 @@ function check_os() {
         exit 6
     fi
 
-    info "OS: ${result}"
+    info "OS: $result"
 }
 
 # Detect primary IPv4 address
@@ -132,7 +132,7 @@ function check_primary_ip() {
         ipv4_addr=$(ip -4 addr show "$primary_interface" | grep inet | awk '{print $2}' | cut -d'/' -f1 | head -1)
     fi
     
-    info "Default IPv4 address: ${ipv4_addr}"
+    info "Default IPv4 address: $ipv4_addr"
 }
 
 # Detect hostname
@@ -169,7 +169,7 @@ function check_python() {
 # Detect Java version
 function check_java() {
     if [[ -n "${JAVA_HOME:-}" ]]; then  # :-} returns empty string instead of error
-        info "JAVA_HOME: ${JAVA_HOME}"
+        info "JAVA_HOME: $JAVA_HOME"
     else
         warn "JAVA_HOME: not detected"
     fi
@@ -222,6 +222,23 @@ function f() {
     echo
 }
 
+function g() {
+    section "Updating SSH Components"
+
+    info "Current OpenSSL version:"
+    openssl version
+
+    read -p "Update SSH components? (recommended for CentOS 9) (Y/n): " -r
+    if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+        log "Updating SSH components..."
+
+        dnf install -y openssl openssh-server openssh-clients
+
+        info "New OpenSSL version:"
+        openssl version
+    fi
+}
+
 
 
 
@@ -249,7 +266,7 @@ function main() {
     info "by Artem Mitrakov (mitrakov-artem@yandex.ru) 2025"
     
     # initialize log file
-    echo "My Installation Log - $(date). Input file = ${INPUT_FILE}" > "${LOG_FILE}"
+    echo "My Installation Log - $(date). Input file = $INPUT_FILE" > "$LOG_FILE"
     log "Starting My installation process"
     
     while true; do
@@ -285,7 +302,7 @@ function main() {
         esac
     done
     
-    info "Installation completed successfully! See log file: ${LOG_FILE}"
+    info "Installation completed successfully! See log file: $LOG_FILE"
 }
 
 # Script execution starts here

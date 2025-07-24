@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail  # exit on any error, undefined variable, or pipe failure
+set -eo pipefail  # exit on any error or pipe failure
 
 # Colours for output
 RED='\033[0;31m'
@@ -7,7 +7,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;36m'
 PURPLE='\033[0;35m'
-NC='\033[0m' # no colour
+NC='\033[0m'
 
 # Global variables
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -53,34 +53,21 @@ function section() {
 
 # Cleanup and error handling
 function handle_cleanup() {
-    # ...
-
     log "Script execution completed"
-}
-
-function handle_interrupt() {
-    echo
-    warn "Caught SIGINT (CTRL+C)! Initiating graceful shutdown..."
-
-    # ...
-
-    exit 1
 }
 
 function handle_error() {
     local last_command="$BASH_COMMAND"
     local last_line="$LINENO"
     error "ERROR occurred on line $last_line: '$last_command' exited with status $?"
-
-    # ...
-
     exit 2
 }
 
 # Check command line arguments
 function check_args() {
     if [[ $# -ne 1 ]]; then
-        error "Usage: $0 <input-file>"
+        error "Usage: $0 <hosts-file>"
+        echo -e "File should contain ip-to-hostname pairs:\n\nIP-address1    hostname1\nIP-address2    hostname2\n...\nIP-addressN    hostnameN\n"
         exit 3
     fi
     
@@ -175,7 +162,7 @@ function check_java() {
     fi
 
     if ! command -v java &> /dev/null; then
-        info "'java' command not found"
+        warn "'java' command not found"
         return 1
     fi
     
@@ -184,7 +171,7 @@ function check_java() {
     if [[ -n "$java_version" ]]; then
         info "Java version: $java_version"
     else
-        error "Cannot detect Java version"
+        warn "Cannot detect Java version"
         exit 10
     fi
 }
@@ -234,9 +221,9 @@ function f() {
 # Get user choice
 function get_user_choice() {
     while true; do
-        read -p "Please select an option [1-4]: " choice
+        read -p "Please select an option [1-5]: " choice
         case $choice in
-            [1-4]) break ;;
+            [1-5]) break ;;
             *) ;;
         esac
     done
@@ -245,19 +232,20 @@ function get_user_choice() {
 
 # Main function
 function main() {
-    section "My Installation Script"
+    section "Ambari Installation Script"
     info "by Artem Mitrakov (mitrakov-artem@yandex.ru) 2025"
     
     # initialize log file
-    echo "My Installation Log - $(date). Input file = ${INPUT_FILE}" > "${LOG_FILE}"
-    log "Starting My installation process"
+    echo "Ambari Installation Log - $(date). Input file = ${INPUT_FILE}" > "${LOG_FILE}"
+    log "Starting Ambari installation process"
     
     while true; do
-        section "My Installation Menu"
-        echo "1. Install Server"
-        echo "2. Install Agent"
-        echo "3. Install Both"
-        echo "4. Exit"
+        section "Ambari Installation Menu"
+        echo "1. Install Ambari-Server"
+        echo "2. Install Ambari-Agent"
+        echo "3. Install repository (may be installed along with Ambari-Server)"
+        echo "4. Install patch for HDFS-Router (all agents after cluster deployment start)"
+        echo "5. Exit"
         echo
         
         local choice=$(get_user_choice)
@@ -279,6 +267,11 @@ function main() {
                 break
                 ;;
             4)
+                log "Selected: Install Both"
+                install_both
+                break
+                ;;
+            5)
                 log "Selected: Exit"
                 exit 0
                 ;;
@@ -296,9 +289,7 @@ check_primary_ip
 check_hostname
 check_python
 check_java
-
 trap handle_cleanup   EXIT
-trap handle_interrupt INT
-trap handle_error     ERR     # "set -e" should be set
+trap handle_error     ERR
 
 main "$@"

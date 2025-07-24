@@ -598,7 +598,7 @@ show_summary() {
 main() {
     check_args "$@"
     check_root
-    detect_os
+    #detect_os
 
     section "Ambari Installation Script (by Artem Mitrakov, 2025)"
     
@@ -606,7 +606,7 @@ main() {
     echo "Ambari Installation Log - $(date)" > "${LOG_FILE}"
     info "Ambari v3.0.0, BigTop v3.3.0, Python v3.9"
     info "Please prepare at least 5 nodes and note their IP-to-Hostname pairs"
-    info "1. Repository (if you already have a public repo, just take its URL)"
+    info "1. Repository (if you have one, take its URL; also may be installed along with Ambari-Server)"
     info "2. Ambari server"
     info "3. Ambari agent master1"
     info "4. Ambari agent master2"

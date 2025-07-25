@@ -8,35 +8,27 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;36m'
 PURPLE='\033[0;35m'
 NC='\033[0m'
-
-# Global variables
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_FILE="${SCRIPT_DIR}/my_install.log"
 INPUT_FILE=""
 
 # Logging functions
 function log() {
     local message="[$(date +'%Y-%m-%d %H:%M:%S')] [LOG]   $1"
     echo -e "${GREEN}${message}${NC}"
-    echo "${message}" >> "${LOG_FILE}"
 }
 
 function info() {
     local message="[$(date +'%Y-%m-%d %H:%M:%S')] [INFO]  $1"
     echo -e "${BLUE}${message}${NC}"
-    echo "${message}" >> "${LOG_FILE}"
 }
 
 function warn() {
     local message="[$(date +'%Y-%m-%d %H:%M:%S')] [WARN]  $1"
     echo -e "${YELLOW}${message}${NC}"
-    echo "${message}" >> "${LOG_FILE}"
 }
 
 function error() {
     local message="[$(date +'%Y-%m-%d %H:%M:%S')] [ERROR] $1"
     echo -e "${RED}${message}${NC}"
-    echo "${message}" >> "${LOG_FILE}"
 }
 
 function section() {
@@ -45,9 +37,6 @@ function section() {
     echo -e "${PURPLE}=================================================="
     echo -e "  ${message}"
     echo -e "==================================================${NC}"
-    echo "==================================================" >> "${LOG_FILE}"
-    echo "  ${message}" >> "${LOG_FILE}"
-    echo "==================================================" >> "${LOG_FILE}"
     echo
 }
 
@@ -685,8 +674,6 @@ function main() {
     info "Make sure to have passwordless root SSH access to all nodes in the network"
     info "All these nodes should have normal unique hostnames and be reflected in your hosts file: $INPUT_FILE"
     
-    # initialize log file
-    echo "Ambari Installation Log - $(date). Input file = $INPUT_FILE" > "$LOG_FILE"
     log "Start Ambari installation process"
     
     while true; do
@@ -728,7 +715,7 @@ function main() {
         esac
     done
     
-    info "Installation completed successfully! See log file: $LOG_FILE"
+    info "Installation completed successfully!"
 }
 
 # Script execution starts here

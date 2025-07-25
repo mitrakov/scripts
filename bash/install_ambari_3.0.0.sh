@@ -53,14 +53,14 @@ function section() {
 
 # Cleanup and error handling
 function handle_cleanup() {
-    log "Script execution completed"
+    log "Good bye, dude!"
 }
 
 function handle_error() {
     local last_command="$BASH_COMMAND"
     local last_line="$LINENO"
     error "ERROR occurred on line $last_line: '$last_command' exited with status $?"
-    exit 2
+    exit 1
 }
 
 # Check command line arguments
@@ -68,14 +68,14 @@ function check_args() {
     if [[ $# -ne 1 ]]; then
         error "Usage: $0 <hosts-file>"
         echo -e "File should contain ip-to-hostname pairs:\n\nIP-address1    hostname1\nIP-address2    hostname2\n...\nIP-addressN    hostnameN\n"
-        exit 3
+        exit 2
     fi
     
     INPUT_FILE="$1"
     
     if [[ ! -f "$INPUT_FILE" ]]; then
         error "File not found: $INPUT_FILE"
-        exit 4
+        exit 3
     fi
 }
 
@@ -83,7 +83,7 @@ function check_args() {
 function check_root() {
     if [[ $EUID -ne 0 ]]; then
         error "This script must be run as root"
-        exit 5
+        exit 4
     fi
 }
 
@@ -101,7 +101,7 @@ function check_os() {
         result=$(cat /etc/redhat-release)
     else
         error "Unable to detect operating system"
-        exit 6
+        exit 5
     fi
 
     info "OS: $result"
@@ -132,7 +132,7 @@ function check_python() {
     # check if Python is installed
     if ! command -v python3 &> /dev/null; then
         error "Python 3 is not installed or not found in PATH"
-        exit 7
+        exit 6
     fi
     
     # get Python version
@@ -149,7 +149,7 @@ function check_python() {
         info "Python version: $version_number"
     else
         error "Python version $version_number is incompatible (3.6+ required)"
-        exit 8
+        exit 7
     fi
 }
 
@@ -179,7 +179,7 @@ function check_java() {
 function check_dnf() {
     if ! command -v dnf &> /dev/null; then
         error "DNF not found. Make sure your OS is RHEL compatible (CentOS, Rocky)"
-        exit 11
+        exit 8
     fi
 }
 
@@ -220,13 +220,15 @@ function setup_hostname() {
     check_hostname
     check_primary_ip
 
-    read -p "Enter new hostname (ideally should match entry from your $INPUT_FILE): " hostname
+    read -p "Enter new hostname (press ENTER to skip): " hostname
     if [[ -n "$hostname" ]]; then
         hostnamectl set-hostname "$hostname"
         check_hostname
     else
         info "Hostname unchanged"
     fi
+
+    sleep 1
 }
 
 # Setup hosts file with predefined entries
@@ -285,18 +287,19 @@ install_java() {
     if [[ ! -d "/root/.sdkman" ]]; then
         # dnf install -y zip unzip tar curl wget
         curl "https://get.sdkman.io" | bash
-        source "/root/.sdkman/bin/sdkman-init.sh"
         log "SdkMan installed"
     else
-        info "SdmMan already installed"
+        info "SdkMan already installed"
     fi
+
+    source "/root/.sdkman/bin/sdkman-init.sh"
 
     # Install Java versions
     log "Installing Java 17..."
-    sdk install java 17.0.16-amzn || info "Java 17 may already be installed"
+    sdk install java 17.0.16-amzn
 
     log "Installing Java 8..."
-    sdk install java 8.0.462-amzn || info "Java 8 may already be installed"
+    sdk install java 8.0.462-amzn
 
     # Set Java 8 as default
     sdk default java 8.0.462-amzn
@@ -304,24 +307,36 @@ install_java() {
     info "Java installations are completed"
 }
 
-# Copy Java installations
+# Copy Java installations (must NOT contain symlinks!)
 function copy_java() {
-    log "Copying Java installations to /usr/jdk64..."
+    section "Copy JDKs"
+    local jdk8="/usr/jdk64/jdk8"
+    local jdk17="/usr/jdk64/jdk17"
+
+    log "Copying Java installations to /usr/jdk64"
 
     mkdir -p /usr/jdk64
 
-    # Copy Java 17 (NOT symlinks!)
+    # copy Java 17
     if [[ -d "/root/.sdkman/candidates/java/17.0.16-amzn" ]]; then
-        cp -r /root/.sdkman/candidates/java/17.0.16-amzn /usr/jdk64/jdk17
-        log "Java 17 copied to /usr/jdk64/jdk17"
+        if [[ ! -d "$jdk17" ]]; then
+            cp -r "/root/.sdkman/candidates/java/17.0.16-amzn" "$jdk17"
+            log "Java 17 copied to $jdk17"
+        else
+            info "Directory $jdk17 already exists, skipping..."
+        fi
     else
         error "Java 17 installation not found"
     fi
 
-    # Copy Java 8 (NOT symlinks!)
+    # copy Java 8
     if [[ -d "/root/.sdkman/candidates/java/8.0.462-amzn" ]]; then
-        cp -r /root/.sdkman/candidates/java/8.0.462-amzn /usr/jdk64/jdk8
-        log "Java 8 copied to /usr/jdk64/jdk8"
+        if [[ ! -d "$jdk8" ]]; then
+            cp -r "/root/.sdkman/candidates/java/8.0.462-amzn" "$jdk8"
+            log "Java 8 copied to $jdk8"
+        else
+            info "Directory $jdk8 already exists, skipping..."
+        fi
     else
         error "Java 8 installation not found"
     fi
@@ -329,7 +344,7 @@ function copy_java() {
 
 # Verify Java installations
 function verify_java() {
-    log "Verifying Java installations..."
+    section "Verifying Java installations..."
 
     if [[ -x "/usr/jdk64/jdk8/bin/java" ]] && [[ -x "/usr/jdk64/jdk17/bin/java" ]]; then
         info "Java 8 version:"
@@ -337,8 +352,6 @@ function verify_java() {
 
         info "Java 17 version:"
         /usr/jdk64/jdk17/bin/java --version
-
-        log "Java verification completed successfully"
     else
         error "Java installations not found or not executable"
     fi
@@ -346,8 +359,6 @@ function verify_java() {
 
 # Common logic for server and agents
 function common_setup() {
-    section "Common setup for Ambari-Server and Ambari-Agent"
-
     update_ssh
     setup_hostname
     setup_hosts
@@ -363,23 +374,26 @@ function common_setup() {
 function setup_ambari_repo() {
     section "Ambari Repository Configuration"
 
-    # TODO: if exists?
+    if [[ ! -f "/etc/yum.repos.d/ambari.repo" ]]; then
+        read -p "Enter the repository URL (e.g. http://192.168.1.1/ambari_repo): " ambari_repo
+        if [[ -n "$ambari_repo" && "$ambari_repo" =~ ^http ]]; then
+            log "Setting up Ambari repository to: $ambari_repo"
 
-    read -p "Enter the repository URL (e.g. http://192.168.1.1/ambari_repo): " ambari_repo
-    if [[ -n "$ambari_repo" && "$ambari_repo" =~ ^http ]]; then
-        log "Setting up Ambari repository to: $ambari_repo"
-
-        cat > /etc/yum.repos.d/ambari.repo << EOF
+            cat > /etc/yum.repos.d/ambari.repo << EOF
 [ambari]
 name=Ambari Repository
 baseurl=$ambari_repo
 gpgcheck=0
 enabled=1
 EOF
-        info "Ambari repository configured to: $ambari_repo"
+            info "Ambari repository configured to: $ambari_repo"
+        else
+            error "Repository URL should start with 'http' or 'https'"
+            exit 9
+        fi
     else
-        error "Repository URL should start with 'http' or 'https'"
-        exit 12
+        info "Ambari repository is already configured"
+        sleep 1
     fi
 }
 
@@ -406,7 +420,7 @@ function setup_ambari_server() {
 
 # Setup MySQL connector for Ambari-Server
 function setup_mysql_connector() {
-    info "If you want to use Hive with MySQL, then you need to register MySQL JDBC driver"
+    info "If you want to use Hive with MySQL you need to register MySQL JDBC driver"
 
     # TODO check if already installed
 
@@ -458,8 +472,6 @@ function install_lsb_packages() {
     dnf install -y "$file1"
     dnf install -y "$file2"
     dnf install -y "$file3"
-
-    info "LSB packages installed successfully"
 }
 
 # Installs extra packages for Ambari-Client
@@ -469,32 +481,34 @@ function install_extra_packages() {
     # Fix 1:
     log "Fix 1: ModuleNotFoundError: No module named 'distro'"
     dnf install -y python3-distro
-    log "python3-distro installed successfully"
+    info "python3-distro installed successfully"
 
     # Fix 2:
     # Root cause: package libtirpc-devel resides in CRB repo which is disabled by default
     log "Fix 2: dnf libtirpc-devel not found"
     dnf config-manager --set-enabled crb || info "CRB repository may already be enabled"
-    log "CRB repository configuration completed"
+    info "CRB repository configuration completed"
 
     # Fix 3:
     # Root cause: RHEL-9 removed LSB packages at all
     log "Fix 3: nothing provides /lib/lsb/init-functions needed by hadoop_3_3_0"
     install_lsb_packages
+    info "LSB packages installed successfully"
 
     # Fix 4:
     # Root cause: /etc/init.d should be a symlink to "rc.d/init.d", but Ambari creates a new directory instead.
     # As a result, package "chkconfig" fails to install. So let's install chkconfig manually, it will create a synlink.
     log "Fix 4: Error unpacking rpm package chkconfig-1.24-2.el9.x86_64"
     dnf install -y chkconfig
+    info "chkconfig installed successfully"
 
-    log "All extra packages have been installed successfully"
+    info "All extra packages have been installed successfully"
     echo
 }
 
 # Fixed error on re-login: PAM: pam_open_session(): Error in service module
 function fix_selinux() {
-    log "Switch SELinux to permissive mode, to avoid possible issues with PAM modules on re-login"
+    log "Switching SELinux to permissive mode, to avoid possible issues with PAM modules on re-login"
 
     # update current boot
     setenforce 0
@@ -563,10 +577,13 @@ function install_repo() {
   section "Installing repository"
   info "It's totally OK to setup repository along with Ambari-Server"
 
+  check_hostname
+  check_primary_ip
+
   read -p "Enter the repository hostname or IP address: " repo_host
   if [[ -z "$repo_host" ]]; then
     error "Repository hostname is required"
-    exit 12
+    exit 10
   fi
 
   log "Installing createrepo"
@@ -615,8 +632,9 @@ function patch_distro_select() {
 
     # check if the distro-select.py file exists
     if [ ! -f "$distro_select_file" ]; then
-        error "Error: $distro_select_file not found. Probably Ambari hasn't installed it yet. Start cluster deployment and wait a bit"
-        exit 14
+        error "Error: file $distro_select_file not found. Probably Ambari-Server hasn't installed it yet"
+        error "First, start cluster deployment and then wait a while"
+        exit 11
     fi
 
     # check if the entry already exists to prevent duplicate additions
@@ -634,7 +652,7 @@ function patch_distro_select() {
         grep -B 2 -A 2 -F "$new_entry" "$distro_select_file"
     else
         error "Error: Failed to patch $distro_select_file. Please check the file manually!"
-        exit 15
+        exit 12
     fi
 }
 
@@ -662,14 +680,14 @@ function main() {
     section "Ambari Installation Script"
     info "by Artem Mitrakov (mitrakov-artem@yandex.ru) 2025"
     info "Requirements: OS redhat9 (CentOS, Rocky); Python 3.6+"
-    info "Install Ambari-Server and (optinally) repository on one dedicated node, and Ambari-Agents to all other nodes"
+    info "Install Ambari-Server and (optinally) repository to one dedicated node, and Ambari-Agents to all other nodes"
     info "For agents, minimum 3 nodes are required (2 masters and the rest for data nodes)"
-    info "Make sure to have root SSH access to all nodes in the network"
+    info "Make sure to have passwordless root SSH access to all nodes in the network"
     info "All these nodes should have normal unique hostnames and be reflected in your hosts file: $INPUT_FILE"
     
     # initialize log file
     echo "Ambari Installation Log - $(date). Input file = $INPUT_FILE" > "$LOG_FILE"
-    log "Starting Ambari installation process"
+    log "Start Ambari installation process"
     
     while true; do
         section "Ambari Installation Menu"

@@ -42,6 +42,7 @@ function section() {
 
 # Cleanup and error handling
 function handle_cleanup() {
+    echo
     log "Good bye, dude!"
 }
 
@@ -150,17 +151,16 @@ function check_java() {
         warn "JAVA_HOME: not detected"
     fi
 
-    if ! command -v java &> /dev/null; then
-        warn "'java' command not found"
-        return 1
-    fi
+    if command -v java &> /dev/null; then
+        local java_version=$(java -version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
     
-    local java_version=$(java -version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-    
-    if [[ -n "$java_version" ]]; then
-        info "Java version: $java_version"
+        if [[ -n "$java_version" ]]; then
+            info "Java version: $java_version"
+        else
+            warn "Cannot detect Java version"
+        fi
     else
-        warn "Cannot detect Java version"
+        warn "'java' command not found"
     fi
 }
 
@@ -274,7 +274,7 @@ install_java() {
 
     # Install Sdkman
     if [[ ! -d "/root/.sdkman" ]]; then
-        # dnf install -y zip unzip tar curl wget
+        dnf install -y zip unzip tar
         curl "https://get.sdkman.io" | bash
         log "SdkMan installed"
     else
@@ -364,9 +364,10 @@ function setup_ambari_repo() {
     section "Ambari Repository Configuration"
 
     if [[ ! -f "/etc/yum.repos.d/ambari.repo" ]]; then
-        read -p "Enter the repository URL (e.g. http://192.168.1.1/ambari_repo): " ambari_repo
+        read -p "Enter the repository URL (e.g. http://192.168.1.1/ambari-repo): " ambari_repo
         if [[ -n "$ambari_repo" && "$ambari_repo" =~ ^http ]]; then
             log "Setting up Ambari repository to: $ambari_repo"
+            log "Creating file /etc/yum.repos.d/ambari.repo"
 
             cat > /etc/yum.repos.d/ambari.repo << EOF
 [ambari]
@@ -420,6 +421,7 @@ function setup_mysql_connector() {
         local file="mysql-connector-j-9.3.0.jar"
         local url="https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/9.3.0/$file"
 
+        dnf install -y wget
         wget -q "$url"
 
         if [[ -f "$file" ]]; then
@@ -447,6 +449,7 @@ function install_lsb_packages() {
     # TODO: tmp folder?
 
     log "Downloading LSB packages..."
+    dnf install -y wget
     local file1="spax-1.6-7.gf.el9.x86_64.rpm"
     local file2="redhat-lsb-submod-security-4.1-59.1.gf.el9.x86_64.rpm"
     local file3="redhat-lsb-core-4.1-59.1.gf.el9.x86_64.rpm"
@@ -581,6 +584,7 @@ function install_repo() {
   cd /var/www/html/ambari-repo
 
   log "Downloading packages (≈7.25 Gb). It may take some time..."
+  dnf install -y wget
   wget -r -np -nH --cut-dirs=4 --reject 'index.html*' "https://www.apache-ambari.com/dist/ambari/3.0.0/rocky9/"
   wget -r -np -nH --cut-dirs=4 --reject 'index.html*' "https://www.apache-ambari.com/dist/bigtop/3.3.0/rocky9/"
 

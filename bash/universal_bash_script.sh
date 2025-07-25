@@ -174,18 +174,16 @@ function check_java() {
         warn "JAVA_HOME: not detected"
     fi
 
-    if ! command -v java &> /dev/null; then
-        info "'java' command not found"
-        return 1
-    fi
+    if command -v java &> /dev/null; then
+        local java_version=$(java -version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
     
-    local java_version=$(java -version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-    
-    if [[ -n "$java_version" ]]; then
-        info "Java version: $java_version"
+        if [[ -n "$java_version" ]]; then
+            info "Java version: $java_version"
+        else
+            warn "Cannot detect Java version"
+        fi
     else
-        error "Cannot detect Java version"
-        exit 10
+        warn "'java' command not found"
     fi
 }
 

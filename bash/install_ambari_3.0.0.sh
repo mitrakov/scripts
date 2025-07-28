@@ -604,9 +604,16 @@ server {
 }
 EOF
 
-  log "Open port 80"
-  firewall-cmd --permanent --add-port=80/tcp
-  firewall-cmd --reload
+  log "Let's open port 80"
+  if systemctl is-active --quiet firewalld; then
+    log "Firewall is enabled, adding rule for 80/tcp"
+    firewall-cmd --permanent --add-port=80/tcp
+    firewall-cmd --reload
+    info "Done..."
+  else
+    info "Firewall is disabled, skipping"
+  fi
+
 
   log "Start NGinx"
   systemctl start nginx && systemctl enable nginx

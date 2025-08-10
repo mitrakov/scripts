@@ -568,6 +568,7 @@ function install_agent() {
 function install_repo() {
   section "Installing repository"
   info "It's totally OK to setup repository along with Ambari-Server"
+  local dir=/var/www/html/ambari-repo
 
   check_hostname
   check_primary_ip
@@ -580,14 +581,28 @@ function install_repo() {
 
   log "Installing createrepo"
   dnf install -y createrepo
-  mkdir -p /var/www/html/ambari-repo
-  cd /var/www/html/ambari-repo
+  mkdir -p "$dir"
+  cd $dir
 
-  log "Downloading packages (≈7.25 Gb). It may take some time..."
-  dnf install -y wget
-  wget -r -np -nH --cut-dirs=4 --reject 'index.html*' "https://www.apache-ambari.com/dist/ambari/3.0.0/rocky9/"
-  wget -r -np -nH --cut-dirs=4 --reject 'index.html*' "https://www.apache-ambari.com/dist/bigtop/3.3.0/rocky9/"
+  log "Downloading packages"
+  local url1="https://www.apache-ambari.com/dist/ambari/3.0.0/rocky9/"
+  local url2="https://www.apache-ambari.com/dist/bigtop/3.3.0/rocky9/"
+  read -p "Download Ambari/Bigtop packages (≈7.25 Gb)? If not, copy them manually to $dir. (Y/n): " -r
+  if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+      log "Downloading packages (≈7.25 Gb). It may take some time..."
+      dnf install -y wget
+      wget -r -np -nH --cut-dirs=4 --reject 'index.html*' "$url1"
+      wget -r -np -nH --cut-dirs=4 --reject 'index.html*' "$url2"
+  fi
 
+  if [ -d "$dir" ] && [ -z "$(ls -A "$dir")" ]; then
+    error "Directory $dir is empty. Please download or copy Ambari and Bigtop packages there"
+    info "$url1"
+    info "$url2"
+    exit 13
+  fi
+
+  log "Creating local repository"
   cd /var/www/html && createrepo .
 
   log "Installing nginx"

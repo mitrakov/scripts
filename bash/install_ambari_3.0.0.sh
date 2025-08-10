@@ -349,6 +349,7 @@ function verify_java() {
 # Common logic for server and agents
 function common_setup() {
     update_ssh
+    fix_selinux
     setup_hostname
     setup_hosts
     disable_firewall
@@ -364,6 +365,8 @@ function setup_ambari_repo() {
     section "Ambari Repository Configuration"
 
     if [[ ! -f "/etc/yum.repos.d/ambari.repo" ]]; then
+        check_hostname
+        check_primary_ip
         read -p "Enter the repository URL (e.g. http://192.168.1.1/ambari-repo): " ambari_repo
         if [[ -n "$ambari_repo" && "$ambari_repo" =~ ^http ]]; then
             log "Setting up Ambari repository to: $ambari_repo"
@@ -498,7 +501,8 @@ function install_extra_packages() {
     echo
 }
 
-# Fixed error on re-login: PAM: pam_open_session(): Error in service module
+# Fix error on re-login: PAM: pam_open_session(): Error in service module
+# Fix error: Nginx cannot see files in /var/www/html
 function fix_selinux() {
     log "Switching SELinux to permissive mode, to avoid possible issues with PAM modules on re-login"
 
@@ -554,7 +558,6 @@ function install_server() {
 function install_agent() {
     common_setup
     install_extra_packages
-    fix_selinux
     set_java_home
 
     info "Agent Installation Completed"
@@ -570,14 +573,7 @@ function install_repo() {
   info "It's totally OK to setup repository along with Ambari-Server"
   local dir=/var/www/html/ambari-repo
 
-  check_hostname
-  check_primary_ip
-
-  read -p "Enter the repository hostname or IP address: " repo_host
-  if [[ -z "$repo_host" ]]; then
-    error "Repository hostname is required"
-    exit 10
-  fi
+  fix_selinux
 
   log "Installing createrepo"
   dnf install -y createrepo
@@ -629,12 +625,21 @@ EOF
     info "Firewall is disabled, skipping"
   fi
 
+  # SELinux fix
+  if [ "$(getenforce)" = "Enforcing" ]; then
+    log "SELinux is Enforcing. Applying chcon..."
+    chcon -R -t httpd_sys_content_t    /var/www/html/
+    chcon -R -t httpd_sys_rw_content_t /var/www/html/
+    echo "Done: Applied SELinux context"
+  else
+    info "SELinux is not Enforcing..."
+  fi
 
-  log "Start NGinx"
+  log "Starting nginx..."
   systemctl start nginx && systemctl enable nginx
 
   log "Validating URL..."
-  curl -s "$repo_host" > /dev/null && info "Nginx is setup for Ambari repository"
+  curl -s localhost > /dev/null && info "Nginx is setup for Ambari repository"
 }
 
 # This addresses the HDFS-Router error: "The package hadoop-hdfs-dfsrouter is not supported".

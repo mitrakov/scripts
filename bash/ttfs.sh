@@ -198,45 +198,44 @@ fi
 
 # Handles single file
 function handle_file() {
-    filename=$1
-
-    # date-time
-    local now=$(date +%Y-%m-%d-%H-%M-%S)                                # TODO Linux?
-    if [[ $EXTRACT_TS_PHOTO == true ]]; then
-      local exif_data=$(exif --machine-readable --tag 0x9003 "$filename" 2>/dev/null || \
-                        exif --machine-readable --tag 0x0132 "$filename" 2>/dev/null)
-      if [[ -n "$exif_data" ]]; then
-        now=$(date -j -f "%Y:%m:%d %H:%M:%S" "$exif_data" +"%Y-%m-%d-%H-%M-%S") # TODO Linux: date -d"${d//:/-}" +"%Y-%m-%d-%H-%M-%S"
-        EXTRACT_TS_FILE=false
-        log "Extracted original photo creation time: $now"
-      else
-        echo "Cannot extract photo creation time for $filename"
-      fi
+  filename=$1
+  # date-time
+  local now=$(date +%Y-%m-%d-%H-%M-%S)                                # TODO Linux?
+  if [[ $EXTRACT_TS_PHOTO == true ]]; then
+    local exif_data=$(exif --machine-readable --tag 0x9003 "$filename" 2>/dev/null || \
+                      exif --machine-readable --tag 0x0132 "$filename" 2>/dev/null)
+    if [[ -n "$exif_data" ]]; then
+      now=$(date -j -f "%Y:%m:%d %H:%M:%S" "$exif_data" +"%Y-%m-%d-%H-%M-%S") # TODO Linux: date -d"${d//:/-}" +"%Y-%m-%d-%H-%M-%S"
+      EXTRACT_TS_FILE=false
+      log "Extracted original photo creation time: $now"
+    else
+      echo "Cannot extract photo creation time for $filename"
     fi
-    if [[ $EXTRACT_TS_FILE == true ]]; then
-      now=$(stat -f %SB -t %Y-%m-%d-%H-%M-%S "$filename")             # TODO Linux: stat -c %w "$filename"
-      log "Extracted original file creation time: $now"
-    fi
-    local year="${now:0:4}"
-
-    # tags and extension
-    local extension="${filename##*.}"
-    local extLower=$(echo "$extension" | tr '[:upper:]' '[:lower:]')    # toLowerCase
-    if [[ $TAGS_FROM_FILENAME == true ]]; then
-      local base=$(basename "$filename")
-      local name="${base%.*}"  # strip extension
-      TAGS=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')   # toLowerCase, replace ' ' with -
-    fi
-
-    # final name
-    local newName="${now}_${ORIGIN}_${LOCATION}_${PERSON}_${TAGS}.$extLower"
-    info "Storage name: $newName"
-    sleep 1                                                             # to have diff time for diff files
-
-    # run
-    mkdir -p "$OUT_DIR/$year"
-    mv -v "$filename" "$OUT_DIR/$year/$newName"
-    echo
+  fi
+  if [[ $EXTRACT_TS_FILE == true ]]; then
+    now=$(stat -f %SB -t %Y-%m-%d-%H-%M-%S "$filename")             # TODO Linux: stat -c %w "$filename"
+    log "Extracted original file creation time: $now"
+  fi
+  local year="${now:0:4}"
+  # tags and extension
+  local extension=""
+  if [[ "$filename" == *.* && "$filename" != .* ]]; then
+    extension="${filename##*.}"
+  fi
+  local extLower=$(echo "$extension" | tr '[:upper:]' '[:lower:]')    # toLowerCase
+  if [[ $TAGS_FROM_FILENAME == true ]]; then
+    local base=$(basename "$filename")
+    local name="${base%.*}"                                           # extract pure name without extension
+    TAGS=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')    # toLowerCase, replace ' ' with -
+  fi
+  # final name
+  local newName="${now}_${ORIGIN}_${LOCATION}_${PERSON}_${TAGS}.$extLower"
+  info "Storage name: $newName"
+  sleep 1                                                             # to have diff time for diff files
+  # run
+  mkdir -p "$OUT_DIR/$year"
+  mv -v "$filename" "$OUT_DIR/$year/$newName"
+  echo
 }
 
 # Main loop
@@ -246,20 +245,27 @@ function main() {
       if [[ -s "$path" ]]; then                                     # -s = sized file
         handle_file "$path"
       else
-        error "Error: File missing or empty: $1"
+        error "Error: file is empty: $1"
         show_help
         exit 1
       fi
     elif [[ -d "$path" ]]; then                                     # if directory
-      for file in "$path"/*; do
-        if [ -f "$file" ]; then
-          handle_file "$file"
-        fi
-      done
+      shopt -s nullglob
+        for file in "$path"/*; do
+          if [ -f "$file" ]; then
+            handle_file "$file"
+          fi
+        done
+      shopt -u nullglob
+
       if rmdir "$path" 2>/dev/null; then
         info "$path removed"
         echo
       fi
+    else
+      error "Error: Path does not exist or is not a file/directory: $path"
+      show_help
+      exit 1
     fi
   done
 }

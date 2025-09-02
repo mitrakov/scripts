@@ -218,3 +218,9 @@ echo "  --use-filename:        $USE_FILENAME"
 
 main "$@"
 log "Done..."
+
+# Example for MC with "3" shortcut:
+# + t r | t d
+# 3       Upload to Tom-Trix File System
+#         TAGS=%{Enter tags:}
+#         ttfs.sh --tags $TAGS --extract-photo-ts --extract-file-ts --use-filename --out /Users/director/Yandex.Disk.localized/ttfs %s

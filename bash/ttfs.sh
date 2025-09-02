@@ -17,6 +17,10 @@ function info() {
     echo -e "${BLUE}$1${NC}"
 }
 
+function warn() {
+    echo -e "${PURPLE}$1${NC}"
+}
+
 function error() {
     echo -e "${RED}$1${NC}"
 }
@@ -27,6 +31,7 @@ TAGS=""
 USE_FILENAME=false
 EXTRACT_TS_FILE=false
 EXTRACT_TS_PHOTO=false
+COUNT=0
 
 # Function to display help
 function show_help() {
@@ -128,84 +133,92 @@ fi
 
 # Handles single file
 function handle_file() {
-  filename=$1
-
-  # date-time
-  local now=$(date +%Y-%m-%d-%H-%M-%S)                                        # TODO Linux?
-  if [[ $EXTRACT_TS_PHOTO == true ]]; then
-    local exif_data=$(exif --machine-readable --tag 0x9003 "$filename" 2>/dev/null || \
-                      exif --machine-readable --tag 0x0132 "$filename" 2>/dev/null)
-    if [[ -n "$exif_data" ]]; then
-      now=$(date -j -f "%Y:%m:%d %H:%M:%S" "$exif_data" +"%Y-%m-%d-%H-%M-%S") # TODO Linux: date -d"${d//:/-}" +"%Y-%m-%d-%H-%M-%S"
-      EXTRACT_TS_FILE=false
-      log "Extracted original photo creation time: $now"
-    else
-      echo "Cannot extract photo creation time for $filename"
+    local filename=$1
+    if [[ ! -s "$filename" ]]; then
+        error "Error: empty file $filename"
+        exit 1
     fi
-  fi
-  if [[ $EXTRACT_TS_FILE == true ]]; then
-    now=$(stat -f %SB -t %Y-%m-%d-%H-%M-%S "$filename")                       # TODO Linux: stat -c %w "$filename"
-    log "Extracted original file creation time: $now"
-  fi
-  local year="${now:0:4}"
 
-  # extension
-  local extension=""
-  if [[ "$filename" == *.* && "$filename" != .* ]]; then
-    extension="${filename##*.}"
-  fi
-  local extLower=$(echo "$extension" | tr '[:upper:]' '[:lower:]')            # toLowerCase
+    # date-time
+    local now=$(date +%Y-%m-%d-%H-%M-%S)                                        # TODO Linux?
+    if [[ $EXTRACT_TS_PHOTO == true ]]; then
+        local exif_data=$(exif --machine-readable --tag 0x9003 "$filename" 2>/dev/null || \
+                          exif --machine-readable --tag 0x0132 "$filename" 2>/dev/null)
+        if [[ -n "$exif_data" ]]; then
+            now=$(date -j -f "%Y:%m:%d %H:%M:%S" "$exif_data" +"%Y-%m-%d-%H-%M-%S") # TODO Linux: date -d"${d//:/-}" +"%Y-%m-%d-%H-%M-%S"
+            EXTRACT_TS_FILE=false
+            log "Extracted original photo creation time: $now"
+        else
+            echo "Cannot extract photo creation time for $filename"
+        fi
+    fi
+    if [[ $EXTRACT_TS_FILE == true ]]; then
+        now=$(stat -f %SB -t %Y-%m-%d-%H-%M-%S "$filename")                       # TODO Linux: stat -c %w "$filename"
+        log "Extracted original file creation time: $now"
+    fi
+    local year="${now:0:4}"
 
-  # additional filename
-  local tags2=""
-  if [[ $USE_FILENAME == true ]]; then
-    local base=$(basename "$filename")                                        # base filename without paths
-    local name="${base%.*}"                                                   # pure name without extension
-    local lower=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')           # toLowerCase, replace ' ' with -
-    tags2="-$lower"
-  fi
+    # extension
+    local extension="noext"
+    if [[ "$filename" == *.* && "$filename" != .* ]]; then
+        extension="${filename##*.}"
+    fi
+    local extLower=$(echo "$extension" | tr '[:upper:]' '[:lower:]')              # toLowerCase
 
-  # final name
-  local newName="${now}-$TAGS$tags2.$extLower"
-  info "Storage name: $newName"
-  sleep 1                                                                     # to have diff time for diff files
+    # additional filename
+    local tags2=""
+    if [[ $USE_FILENAME == true ]]; then
+        local base=$(basename "$filename")                                        # base filename without paths
+        local name="${base%.*}"                                                   # pure name without extension
+        local lower=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')     # toLowerCase, replace ' ' with -
+        tags2="-$lower"
+    fi
 
-  # run
-  mkdir -p "$OUT_DIR/$year"
-  mv -v "$filename" "$OUT_DIR/$year/$newName"
-  echo
+    # final name
+    local newName="${now}-$TAGS$tags2.$extLower"
+    info "Storage name: $newName"
+    sleep 1                                                                       # to have diff time for diff files
+
+    # run
+    mkdir -p "$OUT_DIR/$year"
+    mv -v "$filename" "$OUT_DIR/$year/$newName"
+    COUNT=$((COUNT + 1))
+    echo
+}
+
+# Handles single directory
+function handle_directory() {
+    local dir="$1"
+
+    shopt -s nullglob
+    for item in "$dir"/*; do
+        if [[ -f "$item" ]]; then              # if file
+            handle_file "$item"
+        elif [[ -d "$item" ]]; then            # if directory
+            handle_directory "$item"
+        fi
+    done
+    shopt -u nullglob
+
+    if rmdir "$dir" 2>/dev/null; then
+        warn "$dir removed"
+        echo
+    fi
 }
 
 # Main loop
 function main() {
-  for path in "$@"; do
-    if [[ -f "$path" ]]; then              # if file
-      if [[ -s "$path" ]]; then            # -s = sized file
-        handle_file "$path"
-      else
-        error "Error: file is empty: $1"
-        show_help
-        exit 1
-      fi
-    elif [[ -d "$path" ]]; then            # if directory
-      shopt -s nullglob
-        for file in "$path"/*; do
-          if [ -f "$file" ]; then
-            handle_file "$file"
-          fi
-        done
-      shopt -u nullglob
-
-      if rmdir "$path" 2>/dev/null; then
-        info "$path removed"
-        echo
-      fi
-    else
-      error "Error: file/directory does not exist: $path"
-      show_help
-      exit 1
-    fi
-  done
+    for item in "$@"; do
+        if [[ -f "$item" ]]; then              # if file
+            handle_file "$item"
+        elif [[ -d "$item" ]]; then            # if directory
+            handle_directory "$item"
+        else
+            error "Error: file/directory does not exist: $path"
+            show_help
+            exit 1
+        fi
+    done
 }
 
 # Main program
@@ -217,9 +230,10 @@ echo "  --extract-file-ts:     $EXTRACT_TS_FILE"
 echo "  --use-filename:        $USE_FILENAME"
 
 main "$@"
-log "Done..."
+log "Success. $COUNT file(s) processed."
 
-# Example for MC with "3" shortcut:
+# F9 -> Command -> Edit menu -> User:
+# adds to F2 -> 3 shortcut
 # + t r | t d
 # 3       Upload to Tom-Trix File System
 #         TAGS=%{Enter tags:}

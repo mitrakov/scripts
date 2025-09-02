@@ -232,9 +232,13 @@ echo "  --use-filename:        $USE_FILENAME"
 main "$@"
 log "Success. $COUNT file(s) processed."
 
-# F9 -> Command -> Edit menu -> User:
-# adds to F2 -> 3 shortcut
+# F9 -> Command -> Edit menu -> User: (examples for shortcuts 3 and 4)
 # + t r | t d
-# 3       Upload to Tom-Trix File System
+# 3       Upload to Tom-Trix File System (tags)
+#         TAGS=%{Enter tags:}
+#         ttfs.sh --tags $TAGS --extract-photo-ts --extract-file-ts --out /Users/director/Yandex.Disk.localized/ttfs %s
+# 
+# + t r | t d
+# 4       Upload to Tom-Trix File System (tags + filename)
 #         TAGS=%{Enter tags:}
 #         ttfs.sh --tags $TAGS --extract-photo-ts --extract-file-ts --use-filename --out /Users/director/Yandex.Disk.localized/ttfs %s

@@ -162,11 +162,11 @@ function handle_file() {
     local base=$(basename "$filename")                                        # base filename without paths
     local name="${base%.*}"                                                   # pure name without extension
     local lower=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')           # toLowerCase, replace ' ' with -
-    tags2="_$lower"
+    tags2="-$lower"
   fi
 
   # final name
-  local newName="${now}_$TAGS$tags2.$extLower"
+  local newName="${now}-$TAGS$tags2.$extLower"
   info "Storage name: $newName"
   sleep 1                                                                     # to have diff time for diff files
 

@@ -177,7 +177,7 @@ function handle_file() {
     if [[ $USE_FILENAME == true ]]; then
         local base=$(basename "$filename")                                        # base filename without paths
         local name="${base%.*}"                                                   # pure name without extension
-        local lower=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')     # toLowerCase, replace ' ' with -
+        local lower=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -d '.')    # toLowerCase, replace ' ' with -, remove dots
         tags2="-$lower"
     fi
 

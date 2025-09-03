@@ -72,8 +72,15 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         --tags)
             if [[ -n $2 && $2 != --* ]]; then
-                TAGS="$2"
-                shift 2
+                forbidden='[<>:"/\\|?*]'       # don't put single-quotes into "if"!
+                if [[ "$2" =~ $forbidden ]]; then
+                    error "Error: --tags contains forbidden characters: $forbidden"
+                    show_help
+                    exit 1
+                else
+                    TAGS="$2"
+                    shift 2
+                fi
             else
                 error "Error: --tags requires a value"
                 show_help

@@ -179,7 +179,7 @@ function handle_file() {
         local name="${base%.*}"                                                   # pure name without extension
         local lower=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')     # toLowerCase, replace ' ' with -
         local final="-$lower"
-        tags2="${final//--/-}"                                                    # replace -- with -
+        local tags2=$(echo "$final" | sed 's/-\{2,\}/-/g')                        # replace -- with -
     fi
 
     # final name

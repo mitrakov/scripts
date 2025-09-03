@@ -166,10 +166,10 @@ function handle_file() {
     local year="${now:0:4}"
 
     # extension
-    local extension="noext"
-    if [[ "$filename" == *.* && "$filename" != .* ]]; then
-        extension="${filename##*.}"
-    fi
+    local extension="${filename##*/}"                                                   # remove any path
+    extension="${extension##*.}"                                                  # get text after last dot
+    [[ "$extension" == "$filename" ]] && extension="noext"                        # if nothing happened (files without dot) => use "noext"
+
     local extLower=$(echo "$extension" | tr '[:upper:]' '[:lower:]')              # toLowerCase
 
     # additional filename
@@ -177,8 +177,9 @@ function handle_file() {
     if [[ $USE_FILENAME == true ]]; then
         local base=$(basename "$filename")                                        # base filename without paths
         local name="${base%.*}"                                                   # pure name without extension
-        local lower=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -d '.')    # toLowerCase, replace ' ' with -, remove dots
-        tags2="-$lower"
+        local lower=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')     # toLowerCase, replace ' ' with -
+        local final="-$lower"
+        tags2="${final//--/-}"                                                    # replace -- with -
     fi
 
     # final name

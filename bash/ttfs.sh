@@ -146,20 +146,22 @@ function handle_file() {
     fi
 
     # date-time
-    local now=$(date +%Y-%m-%d-%H-%M-%S)                                        # TODO Linux?
+    local now=$(date +%Y-%m-%d-%H-%M-%S)                                          # default timestamp.now() TODO Linux?
+    local extracted=false
     if [[ $EXTRACT_TS_PHOTO == true ]]; then
         local exif_data=$(exif --machine-readable --tag 0x9003 "$filename" 2>/dev/null || \
                           exif --machine-readable --tag 0x0132 "$filename" 2>/dev/null)
         if [[ -n "$exif_data" ]]; then
             now=$(date -j -f "%Y:%m:%d %H:%M:%S" "$exif_data" +"%Y-%m-%d-%H-%M-%S") # TODO Linux: date -d"${d//:/-}" +"%Y-%m-%d-%H-%M-%S"
-            EXTRACT_TS_FILE=false
+            extracted=true
             log "Extracted original photo creation time: $now"
         else
             echo "Cannot extract photo creation time for $filename"
         fi
     fi
-    if [[ $EXTRACT_TS_FILE == true ]]; then
+    if [[ $EXTRACT_TS_FILE == true && $extracted == false ]]; then
         now=$(stat -f %SB -t %Y-%m-%d-%H-%M-%S "$filename")                       # TODO Linux: stat -c %w "$filename"
+        extracted=true
         log "Extracted original file creation time: $now"
     fi
     local year="${now:0:4}"
@@ -176,20 +178,19 @@ function handle_file() {
     if [[ $USE_FILENAME == true ]]; then
         local base=$(basename "$filename")                                        # base filename without paths
         local name="${base%.*}"                                                   # pure name without extension
-        # sanitizing: toLowerCase; " " -> "_"; rm non-Windows chars, rm (),; squash -- and __; "._" -> "."
-        tags2=$(echo "-$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | tr -d '<>:"/\\|?*(),' | sed "s/-\{2,\}/-/g" | sed "s/_\{2,\}/_/g" | sed 's/\._/\./g')
+        # sanitizing: toLowerCase; " " -> "_"; rm non-Windows chars, rm (),'!; squash -- and __; "._" -> "."
+        tags2=$(echo "-$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | tr -d "<>:\"/\\|?*(),'!" | sed "s/-\{2,\}/-/g" | sed "s/_\{2,\}/_/g" | sed 's/\._/\./g')
     fi
 
     # final name
     local newName="${now}-$TAGS$tags2.$extLower"
-    info "Storage name: $newName"
-    sleep 1                                                                       # to have diff time for diff files
 
     # run
     mkdir -p "$OUT_DIR/$year"
     mv -v "$filename" "$OUT_DIR/$year/$newName"
     COUNT=$((COUNT + 1))
     echo
+    sleep 1                                                                       # to have diff time for diff files
 }
 
 # Handles single directory

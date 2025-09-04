@@ -177,8 +177,8 @@ function handle_file() {
     if [[ $USE_FILENAME == true ]]; then
         local base=$(basename "$filename")                                        # base filename without paths
         local name="${base%.*}"                                                   # pure name without extension
-        # sanitizing: toLowerCase; " " -> "_"; rm non-Windows chars, rm (); squash -- and __; "._" -> "."
-        tags2=$(echo "-$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | tr -d '<>:"/\\|?*()' | sed "s/-\{2,\}/-/g" | sed "s/_\{2,\}/_/g" | sed 's/\._/\./g')
+        # sanitizing: toLowerCase; " " -> "_"; rm non-Windows chars, rm (),; squash -- and __; "._" -> "."
+        tags2=$(echo "-$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | tr -d '<>:"/\\|?*(),' | sed "s/-\{2,\}/-/g" | sed "s/_\{2,\}/_/g" | sed 's/\._/\./g')
     fi
 
     # final name

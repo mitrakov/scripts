@@ -148,7 +148,7 @@ function handle_file() {
     # date-time
     local now=$(date +%Y-%m-%d-%H-%M-%S)                                          # default timestamp.now() TODO Linux?
     local extracted=false
-    if [[ $EXTRACT_TS_PHOTO == true ]]; then
+    if [[ $EXTRACT_TS_PHOTO == true && $extracted == false ]]; then
         local exif_data=$(exif --machine-readable --tag 0x9003 "$filename" 2>/dev/null || \
                           exif --machine-readable --tag 0x0132 "$filename" 2>/dev/null)
         if [[ -n "$exif_data" ]]; then

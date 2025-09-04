@@ -156,7 +156,7 @@ function handle_file() {
             extracted=true
             log "Extracted original photo creation time: $now"
         else
-            echo "Cannot extract photo creation time for $filename"
+            echo "Cannot extract photo creation time for: $filename"
         fi
     fi
     if [[ $EXTRACT_TS_FILE == true && $extracted == false ]]; then

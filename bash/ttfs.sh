@@ -38,16 +38,16 @@ function show_help() {
     info "Usage:   $0 [OPTIONS] file1 file2 ... fileN"
     info "Example: $0 --tags my-kids --extract-photo-ts --extract-file-ts --use-filename --out /Users/tommy/ttfs 1.JPG 2.JPG 3.JPG myDir"
     echo
-    echo "┌──────────────────────┬──────────────────────────────────────────────────────────────────┬──────────────────────┐"
-    echo "│ Option               │ Description                                                      │ Example              │"
-    echo "├──────────────────────┼──────────────────────────────────────────────────────────────────┼──────────────────────┤"
-    echo "│ --tags TAG1-TAG2     │ Dash-separated-tags                                              │ --tags my-kids-party │"
-    echo "│ --extract-file-ts    │ Extract file creation time from the file system                  │ --extract-file-ts    │"
-    echo "│ --extract-photo-ts   │ Extract photo creation time from the EXIF data (if exists)       │ --extract-photo-ts   │"
-    echo "│ --use-filename       │ Add current filename to storage name                             │ --use-filename       │"
-    echo "│ --out FOLDER         │ Output folder (default is script directory)                      │ --out /Users/me/ttfs │"
-    echo "│ --help               │ Show this help message                                           │ --help               │"
-    echo "└──────────────────────┴──────────────────────────────────────────────────────────────────┴──────────────────────┘"
+    echo "┌───────────────────────┬──────────────────────────────────────────────────────────────────┬──────────────────────┐"
+    echo "│ Option                │ Description                                                      │ Example              │"
+    echo "├───────────────────────┼──────────────────────────────────────────────────────────────────┼──────────────────────┤"
+    echo "│ --tags TAG1-TAG2-TAG3 │ Dash-separated-tags                                              │ --tags my-kids-party │"
+    echo "│ --extract-file-ts     │ Extract file creation time from the file system                  │ --extract-file-ts    │"
+    echo "│ --extract-photo-ts    │ Extract photo creation time from the EXIF data (if exists)       │ --extract-photo-ts   │"
+    echo "│ --use-filename        │ Add current filename to storage name                             │ --use-filename       │"
+    echo "│ --out FOLDER          │ Output folder (default is script directory)                      │ --out /Users/me/ttfs │"
+    echo "│ --help                │ Show this help message                                           │ --help               │"
+    echo "└───────────────────────┴──────────────────────────────────────────────────────────────────┴──────────────────────┘"
     echo
     echo 'If both "--extract-file-ts" and "--extract-photo-ts" specified, then it tries to extract from the photo, then from the FS'
     echo
@@ -72,9 +72,8 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         --tags)
             if [[ -n $2 && $2 != --* ]]; then
-                forbidden='[<>:"/\\|?*]'       # don't put single-quotes into "if"!
-                if [[ "$2" =~ $forbidden ]]; then
-                    error "Error: --tags contains forbidden characters $forbidden: $2"
+                if [[ ! "$2" =~ ^[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*$ ]]; then
+                    error "Error: --tags should be dash separated: $2"
                     show_help
                     exit 1
                 else
@@ -242,10 +241,10 @@ log "Success. $COUNT file(s) processed."
 # F9 -> Command -> Edit menu -> User: (examples for shortcuts 3 and 4)
 # + t r | t d
 # w       Upload to Tom-Trix File System (tags)
-#         TAGS=%{Enter tags:}
+#         TAGS=%{Enter dash-separated tags:}
 #         ttfs.sh --tags $TAGS --extract-photo-ts --extract-file-ts --out /Users/director/Yandex.Disk.localized/ttfs %s
 # 
 # + t r | t d
 # e       Upload to Tom-Trix File System (tags + filename)
-#         TAGS=%{Enter tags:}
+#         TAGS=%{Enter dash-separated tags:}
 #         ttfs.sh --tags $TAGS --extract-photo-ts --extract-file-ts --use-filename --out /Users/director/Yandex.Disk.localized/ttfs %s

@@ -74,7 +74,7 @@ while [[ $# -gt 0 ]]; do
             if [[ -n $2 && $2 != --* ]]; then
                 forbidden='[<>:"/\\|?*]'       # don't put single-quotes into "if"!
                 if [[ "$2" =~ $forbidden ]]; then
-                    error "Error: --tags contains forbidden characters: $forbidden"
+                    error "Error: --tags contains forbidden characters $forbidden: $2"
                     show_help
                     exit 1
                 else
@@ -166,7 +166,7 @@ function handle_file() {
     local year="${now:0:4}"
 
     # extension
-    local extension="${filename##*/}"                                                   # remove any path
+    local extension="${filename##*/}"                                             # remove any path
     extension="${extension##*.}"                                                  # get text after last dot
     [[ "$extension" == "$filename" ]] && extension="noext"                        # if nothing happened (files without dot) => use "noext"
 
@@ -177,9 +177,8 @@ function handle_file() {
     if [[ $USE_FILENAME == true ]]; then
         local base=$(basename "$filename")                                        # base filename without paths
         local name="${base%.*}"                                                   # pure name without extension
-        local lower=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' <>' '---') # toLowerCase, replace space,>,< with -
-        local final="-$lower"
-        local tags2=$(echo "$final" | sed 's/-\{2,\}/-/g')                        # replace -- with -
+        # sanitizing: toLowerCase; " " -> "_"; rm non-Windows chars, rm (); squash -- and __; "._" -> "."
+        tags2=$(echo "-$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | tr -d '<>:"/\\|?*()' | sed "s/-\{2,\}/-/g" | sed "s/_\{2,\}/_/g" | sed 's/\._/\./g')
     fi
 
     # final name
@@ -242,11 +241,11 @@ log "Success. $COUNT file(s) processed."
 
 # F9 -> Command -> Edit menu -> User: (examples for shortcuts 3 and 4)
 # + t r | t d
-# 3       Upload to Tom-Trix File System (tags)
+# w       Upload to Tom-Trix File System (tags)
 #         TAGS=%{Enter tags:}
 #         ttfs.sh --tags $TAGS --extract-photo-ts --extract-file-ts --out /Users/director/Yandex.Disk.localized/ttfs %s
 # 
 # + t r | t d
-# 4       Upload to Tom-Trix File System (tags + filename)
+# e       Upload to Tom-Trix File System (tags + filename)
 #         TAGS=%{Enter tags:}
 #         ttfs.sh --tags $TAGS --extract-photo-ts --extract-file-ts --use-filename --out /Users/director/Yandex.Disk.localized/ttfs %s

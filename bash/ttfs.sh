@@ -239,13 +239,27 @@ echo "  --use-filename:        $USE_FILENAME"
 main "$@"
 log "Success. $COUNT file(s) processed."
 
-# F9 -> Command -> Edit menu -> User: (examples for shortcuts 3 and 4)
+# Midnight commander:
+# F9 -> Command -> Edit menu -> User: (examples for shortcuts "w" and "e")
+#
 # + t r | t d
 # w       Upload to Tom-Trix File System (tags)
-#         TAGS=%{Enter dash-separated tags:}
+#         TAGS=%{TTFS tags only. Enter tags:}
 #         ttfs.sh --tags $TAGS --extract-photo-ts --extract-file-ts --out /Users/director/Yandex.Disk.localized/ttfs %s
 # 
 # + t r | t d
 # e       Upload to Tom-Trix File System (tags + filename)
-#         TAGS=%{Enter dash-separated tags:}
+#         TAGS=%{TTFS tags with filename. Enter tags:}
 #         ttfs.sh --tags $TAGS --extract-photo-ts --extract-file-ts --use-filename --out /Users/director/Yandex.Disk.localized/ttfs %s
+#
+# Usage: F2
+
+# Nimble commander:
+# Settings -> Tools -> + -> select "Startup mode: Terminal"
+#
+# ttfs.sh
+# --tags %"TTFS tags only. Enter tags"? --extract-photo-ts --extract-file-ts --out /Users/director/Yandex.Disk.localized/ttfs %F
+# ttfs.sh
+# --tags %"TTFS tags with filename. Enter tags"? --extract-photo-ts --extract-file-ts --use-filename --out /Users/director/Yandex.Disk.localized/ttfs %F
+#
+# Then add shortcuts manually in Settings

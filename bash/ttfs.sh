@@ -146,6 +146,7 @@ function handle_file() {
     fi
 
     # date-time
+    sleep 1                                                                       # to have diff time for diff files
     local now=$(date +%Y-%m-%d-%H-%M-%S)                                          # default timestamp.now() TODO Linux?
     local extracted=false
     if [[ $EXTRACT_TS_PHOTO == true && $extracted == false ]]; then
@@ -190,7 +191,6 @@ function handle_file() {
     mv -v "$filename" "$OUT_DIR/$year/$newName"
     COUNT=$((COUNT + 1))
     echo
-    sleep 1                                                                       # to have diff time for diff files
 }
 
 # Handles single directory
@@ -244,7 +244,7 @@ log "Success. $COUNT file(s) processed."
 #
 # + t r | t d
 # w       Upload to Tom-Trix File System (tags)
-#         TAGS=%{TTFS tags only. Enter tags:}
+#         TAGS=%{TTFS tags. Enter tags:}
 #         ttfs.sh --tags $TAGS --extract-photo-ts --extract-file-ts --out /Users/director/Yandex.Disk.localized/ttfs %s
 # 
 # + t r | t d
@@ -258,8 +258,8 @@ log "Success. $COUNT file(s) processed."
 # Settings -> Tools -> + -> select "Startup mode: Terminal"
 #
 # ttfs.sh
-# --tags %"TTFS tags only. Enter tags"? --extract-photo-ts --extract-file-ts --out /Users/director/Yandex.Disk.localized/ttfs %F
+# --tags %"TTFS tags. Enter tags"? --extract-photo-ts --extract-file-ts --out /Users/director/Yandex.Disk.localized/ttfs %P
 # ttfs.sh
-# --tags %"TTFS tags with filename. Enter tags"? --extract-photo-ts --extract-file-ts --use-filename --out /Users/director/Yandex.Disk.localized/ttfs %F
+# --tags %"TTFS tags with filename. Enter tags"? --extract-photo-ts --extract-file-ts --use-filename --out /Users/director/Yandex.Disk.localized/ttfs %P
 #
 # Then add shortcuts manually in Settings

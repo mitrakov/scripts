@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # Logger
 RED='\033[0;31m'
@@ -29,27 +29,22 @@ function error() {
 OUT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)     # script dir by default
 TAGS=""
 USE_FILENAME=false
-EXTRACT_TS_FILE=false
-EXTRACT_TS_PHOTO=false
+EXTRACT_DATETIME=false
 COUNT=0
 
 # Function to display help
 function show_help() {
-    info "Usage:   $0 [OPTIONS] file1 file2 ... fileN"
-    info "Example: $0 --tags my-kids --extract-photo-ts --extract-file-ts --use-filename --out /Users/tommy/ttfs 1.JPG 2.JPG 3.JPG myDir"
+    info "Usage:   $0 [OPTIONS] <list of files and folders>"
+    info "Example: $0 --tags my-kids --extract-ts --use-filename --out /Users/tommy/ttfs 1.JPG 2.JPG 3.JPG myDir"
     echo
-    echo "┌───────────────────────┬──────────────────────────────────────────────────────────────────┬──────────────────────┐"
-    echo "│ Option                │ Description                                                      │ Example              │"
-    echo "├───────────────────────┼──────────────────────────────────────────────────────────────────┼──────────────────────┤"
-    echo "│ --tags TAG1-TAG2-TAG3 │ Dash-separated-tags                                              │ --tags my-kids-party │"
-    echo "│ --extract-file-ts     │ Extract file creation time from the file system                  │ --extract-file-ts    │"
-    echo "│ --extract-photo-ts    │ Extract photo creation time from the EXIF data (if exists)       │ --extract-photo-ts   │"
-    echo "│ --use-filename        │ Add current filename to storage name                             │ --use-filename       │"
-    echo "│ --out FOLDER          │ Output folder (default is script directory)                      │ --out /Users/me/ttfs │"
-    echo "│ --help                │ Show this help message                                           │ --help               │"
-    echo "└───────────────────────┴──────────────────────────────────────────────────────────────────┴──────────────────────┘"
-    echo
-    echo 'If both "--extract-file-ts" and "--extract-photo-ts" specified, then it tries to extract from the photo, then from the FS'
+    echo "┌───────────────────────┬───────────────────────────────────────────────────────────────────┬──────────────────────┐"
+    echo "│ Option                │ Description                                                       │ Example              │"
+    echo "├───────────────────────┼───────────────────────────────────────────────────────────────────┼──────────────────────┤"
+    echo "│ --tags TAG1-TAG2-TAG3 │ Dash-separated-tags                                               │ --tags my-kids-party │"
+    echo "│ --extract-ts          │ Try to extract datetime from file system, photo or video metadata │ --extract-ts         │"
+    echo "│ --use-filename        │ Add current filename to storage name                              │ --use-filename       │"
+    echo "│ --out FOLDER          │ Output folder (default is script directory)                       │ --out /Users/me/ttfs │"
+    echo "└───────────────────────┴───────────────────────────────────────────────────────────────────┴──────────────────────┘"
     echo
 }
 
@@ -59,7 +54,11 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
     exit 1
 fi
 if ! command -v exif &> /dev/null; then
-    error "Error: The 'exif' utility could not be found. Please install it via Homebrew: brew install exif"   # TODO: Linux?
+    error "Error: The 'exif' utility could not be found. Please install: brew install exif"
+    exit 1
+fi
+if ! command -v ffprobe &> /dev/null; then
+    error "Error: The 'ffprobe' utility could not be found. Please install: brew install ffmpeg"
     exit 1
 fi
 if [[ $# -eq 0 ]]; then
@@ -90,12 +89,8 @@ while [[ $# -gt 0 ]]; do
             USE_FILENAME=true
             shift
             ;;
-        --extract-file-ts)
-            EXTRACT_TS_FILE=true
-            shift
-            ;;
-        --extract-photo-ts)
-            EXTRACT_TS_PHOTO=true
+        --extract-ts)
+            EXTRACT_DATETIME=true
             shift
             ;;
         --out)
@@ -107,10 +102,6 @@ while [[ $# -gt 0 ]]; do
                 show_help
                 exit 1
             fi
-            ;;
-        --help)
-            show_help
-            exit 0
             ;;
         --*)
             error "Error: unknown option $1"
@@ -148,22 +139,24 @@ function handle_file() {
     # date-time
     sleep 1                                                                       # to have diff time for diff files
     local now=$(date +%Y-%m-%d-%H-%M-%S)                                          # default timestamp.now() TODO Linux?
-    local extracted=false
-    if [[ $EXTRACT_TS_PHOTO == true && $extracted == false ]]; then
+    if [[ $EXTRACT_DATETIME == true ]]; then
         local exif_data=$(exif --machine-readable --tag 0x9003 "$filename" 2>/dev/null || \
                           exif --machine-readable --tag 0x0132 "$filename" 2>/dev/null)
         if [[ -n "$exif_data" ]]; then
-            now=$(date -j -f "%Y:%m:%d %H:%M:%S" "$exif_data" +"%Y-%m-%d-%H-%M-%S") # TODO Linux: date -d"${d//:/-}" +"%Y-%m-%d-%H-%M-%S"
-            extracted=true
+            now=$(date -j -f "%Y:%m:%d %H:%M:%S" "$exif_data" +%Y-%m-%d-%H-%M-%S) # TODO Linux: date -d"${d//:/-}" +"%Y-%m-%d-%H-%M-%S"
             log "Extracted original photo creation time: $now"
         else
             echo "Cannot extract photo creation time for: $filename"
+            local video_data=$(ffprobe -v quiet -show_entries format_tags=creation_time -of default=noprint_wrappers=1:nokey=1 "$filename")
+            if [[ -n "$video_data" ]]; then
+                now=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$video_data" +%Y-%m-%d-%H-%M-%S)
+                log "Extracted original video creation time: $now"
+            else
+                echo "Cannot extract video creation time for: $filename"
+                now=$(stat -f %SB -t %Y-%m-%d-%H-%M-%S "$filename")                       # TODO Linux: stat -c %w "$filename"
+                info "Extracted file creation time: $now"
+            fi
         fi
-    fi
-    if [[ $EXTRACT_TS_FILE == true && $extracted == false ]]; then
-        now=$(stat -f %SB -t %Y-%m-%d-%H-%M-%S "$filename")                       # TODO Linux: stat -c %w "$filename"
-        extracted=true
-        log "Extracted original file creation time: $now"
     fi
     local year="${now:0:4}"
 
@@ -232,8 +225,7 @@ function main() {
 echo "  Files and folders:     $@"
 echo "  --tags:                $TAGS"
 echo "  --out:                 $OUT_DIR"
-echo "  --extract-photo-ts:    $EXTRACT_TS_PHOTO"
-echo "  --extract-file-ts:     $EXTRACT_TS_FILE"
+echo "  --extract-ts:          $EXTRACT_DATETIME"
 echo "  --use-filename:        $USE_FILENAME"
 
 main "$@"
@@ -245,12 +237,12 @@ log "Success. $COUNT file(s) processed."
 # + t r | t d
 # w       Upload to Tom-Trix File System (tags)
 #         TAGS=%{TTFS tags. Enter tags:}
-#         ttfs.sh --tags $TAGS --extract-photo-ts --extract-file-ts --out /Users/director/Yandex.Disk.localized/ttfs %s
+#         ttfs.sh --tags $TAGS --extract-ts --out /Users/director/Yandex.Disk.localized/ttfs %s
 # 
 # + t r | t d
 # e       Upload to Tom-Trix File System (tags + filename)
 #         TAGS=%{TTFS tags with filename. Enter tags:}
-#         ttfs.sh --tags $TAGS --extract-photo-ts --extract-file-ts --use-filename --out /Users/director/Yandex.Disk.localized/ttfs %s
+#         ttfs.sh --tags $TAGS --extract-ts --use-filename --out /Users/director/Yandex.Disk.localized/ttfs %s
 #
 # Usage: F2
 
@@ -258,8 +250,8 @@ log "Success. $COUNT file(s) processed."
 # Settings -> Tools -> + -> select "Startup mode: Terminal"
 #
 # ttfs.sh
-# --tags %"TTFS tags. Enter tags"? --extract-photo-ts --extract-file-ts --out /Users/director/Yandex.Disk.localized/ttfs %P
+# --tags %"TTFS tags. Enter tags"? --extract-ts --out /Users/director/Yandex.Disk.localized/ttfs %P
 # ttfs.sh
-# --tags %"TTFS tags with filename. Enter tags"? --extract-photo-ts --extract-file-ts --use-filename --out /Users/director/Yandex.Disk.localized/ttfs %P
+# --tags %"TTFS tags with filename. Enter tags"? --extract-ts --use-filename --out /Users/director/Yandex.Disk.localized/ttfs %P
 #
 # Then add shortcuts manually in Settings

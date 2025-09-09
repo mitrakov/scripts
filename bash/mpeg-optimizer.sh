@@ -12,6 +12,6 @@ for i in *.avi *.mp4 *.mpg *.mov *.mkv *.flv *.webm; do
   extension="${i##*.}"        # https://stackoverflow.com/a/965072/2212849
   echo
   echo "Converting: $i -> $i.$extension"
-  ffmpeg -i "$i" "$i.$extension"
+  ffmpeg -i "$i" -map_metadata 0 "$i.$extension" # "-map_metadata 0" keeps metadata
   mv -f "$i.$extension" "$i"
 done

@@ -30,6 +30,7 @@ OUT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)     # script dir by defaul
 TAGS=""
 USE_FILENAME=false
 EXTRACT_DATETIME=false
+QUICK=false
 COUNT=0
 
 # Function to display help
@@ -43,6 +44,7 @@ function show_help() {
     echo "│ --tags TAG1-TAG2-TAG3 │ Dash-separated-tags                                               │ --tags my-kids-party │"
     echo "│ --extract-ts          │ Try to extract datetime from file system, photo or video metadata │ --extract-ts         │"
     echo "│ --use-filename        │ Add current filename to storage name                              │ --use-filename       │"
+    echo "│ --quick               │ Use small delay (may reduce time for large folders)               │ --quick              │"
     echo "│ --out FOLDER          │ Output folder (default is script directory)                       │ --out /Users/me/ttfs │"
     echo "└───────────────────────┴───────────────────────────────────────────────────────────────────┴──────────────────────┘"
     echo
@@ -72,7 +74,7 @@ while [[ $# -gt 0 ]]; do
         --tags)
             if [[ -n $2 && $2 != --* ]]; then
                 if [[ ! "$2" =~ ^[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*$ ]]; then
-                    error "Error: --tags should be dash separated: $2"
+                    error "Error: --tags should be dash separated, and contain only digits and latin characters: $2"
                     show_help
                     exit 1
                 else
@@ -93,6 +95,10 @@ while [[ $# -gt 0 ]]; do
             EXTRACT_DATETIME=true
             shift
             ;;
+        --quick)
+            QUICK=true
+            shift
+            ;;
         --out)
             if [[ -n $2 && $2 != --* ]]; then
                 OUT_DIR="$2"
@@ -105,6 +111,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --*)
             error "Error: unknown option $1"
+            show_help
             exit 1
             ;;
         *)
@@ -121,6 +128,13 @@ if [[ -z "$TAGS" ]]; then
     exit 1
 fi
 
+# Check that quick=T => use-filename=T
+if [[ $QUICK == true && $USE_FILENAME == false ]]; then
+    error "Error: --quick must be used with --use-filename"
+    show_help
+    exit 1
+fi
+
 # Check remaining positional arguments
 if [[ $# == 0 ]]; then
     error "Error: no files specified in argument list"
@@ -133,12 +147,19 @@ function handle_file() {
     local filename=$1
     if [[ ! -s "$filename" ]]; then
         error "Error: empty file $filename"
+        show_help
         exit 1
     fi
 
+    # sleep
+    if [[ $QUICK == true ]]; then
+        sleep 0.2
+    else
+        sleep 1
+    fi
+
     # date-time
-    sleep 1                                                                       # to have diff time for diff files
-    local now=$(date +%Y-%m-%d-%H-%M-%S)                                          # default timestamp.now() TODO Linux?
+    local now=$(date +%Y-%m-%d-%H-%M-%S)                                # default timestamp.now() TODO Linux?
     if [[ $EXTRACT_DATETIME == true ]]; then
         local exif_data=$(exif --machine-readable --tag 0x9003 "$filename" 2>/dev/null || \
                           exif --machine-readable --tag 0x0132 "$filename" 2>/dev/null)
@@ -153,7 +174,7 @@ function handle_file() {
                 log "Extracted original video creation time: $now"
             else
                 echo "Cannot extract video creation time for: $filename"
-                now=$(stat -f %SB -t %Y-%m-%d-%H-%M-%S "$filename")                       # TODO Linux: stat -c %w "$filename"
+                now=$(stat -f %SB -t %Y-%m-%d-%H-%M-%S "$filename")     # TODO Linux: stat -c %w "$filename"
                 info "Extracted file creation time: $now"
             fi
         fi
@@ -161,17 +182,17 @@ function handle_file() {
     local year="${now:0:4}"
 
     # extension
-    local extension="${filename##*/}"                                             # remove any path
-    extension="${extension##*.}"                                                  # get text after last dot
-    [[ "$extension" == "$filename" ]] && extension="noext"                        # if nothing happened (files without dot) => use "noext"
+    local extension="${filename##*/}"                                   # remove any path
+    extension="${extension##*.}"                                        # get text after last dot
+    [[ "$extension" == "$filename" ]] && extension="noext"              # if nothing happened (files without dot) => use "noext"
 
-    local extLower=$(echo "$extension" | tr '[:upper:]' '[:lower:]')              # toLowerCase
+    local extLower=$(echo "$extension" | tr '[:upper:]' '[:lower:]')    # toLowerCase
 
     # additional filename
     local tags2=""
     if [[ $USE_FILENAME == true ]]; then
-        local base=$(basename "$filename")                                        # base filename without paths
-        local name="${base%.*}"                                                   # pure name without extension
+        local base=$(basename "$filename")                              # base filename without paths
+        local name="${base%.*}"                                         # pure name without extension
         # sanitizing: toLowerCase; " " -> "_"; rm non-Windows chars, rm (),'!; squash -- and __; "._" -> "."
         tags2=$(echo "-$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | tr -d "<>:\"/\\|?*(),'!" | sed "s/-\{2,\}/-/g" | sed "s/_\{2,\}/_/g" | sed 's/\._/\./g')
     fi
@@ -214,7 +235,7 @@ function main() {
         elif [[ -d "$item" ]]; then            # if directory
             handle_directory "$item"
         else
-            error "Error: file/directory does not exist: $path"
+            error "Error: file/directory does not exist: $item"
             show_help
             exit 1
         fi
@@ -227,6 +248,7 @@ echo "  --tags:                $TAGS"
 echo "  --out:                 $OUT_DIR"
 echo "  --extract-ts:          $EXTRACT_DATETIME"
 echo "  --use-filename:        $USE_FILENAME"
+echo "  --quick:               $QUICK"
 
 main "$@"
 log "Success. $COUNT file(s) processed."

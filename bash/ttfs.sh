@@ -102,6 +102,7 @@ while [[ $# -gt 0 ]]; do
         --out)
             if [[ -n $2 && $2 != --* ]]; then
                 OUT_DIR="$2"
+                OUT_DIR="${OUT_DIR%/}"    # remove trailing slash, if present
                 shift 2
             else
                 error "Error: --out requires a value"
@@ -115,7 +116,7 @@ while [[ $# -gt 0 ]]; do
             exit 1
             ;;
         *)
-            # Non-option argument - treat as positional argument
+            # non-option argument - treat as positional argument
             break
             ;;
     esac

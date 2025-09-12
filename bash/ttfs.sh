@@ -17,6 +17,10 @@ function info() {
     echo -e "${BLUE}$1${NC}"
 }
 
+function msg() {
+    echo -e "${YELLOW}$1${NC}"
+}
+
 function warn() {
     echo -e "${PURPLE}$1${NC}"
 }
@@ -244,6 +248,7 @@ function main() {
 }
 
 # Main program
+msg "TTFS"
 echo "  Files and folders:     $@"
 echo "  --tags:                $TAGS"
 echo "  --out:                 $OUT_DIR"
@@ -252,7 +257,7 @@ echo "  --use-filename:        $USE_FILENAME"
 echo "  --quick:               $QUICK"
 
 main "$@"
-log "Success. $COUNT file(s) processed."
+warn "Success. $COUNT file(s) processed."
 
 # Midnight commander:
 # F9 -> Command -> Edit menu -> User: (examples for shortcuts "w" and "e")

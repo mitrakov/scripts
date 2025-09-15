@@ -1,134 +1,148 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-ROOT_DIR="$1"
-TTFS_DIR="$2"
+# Logger
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;36m'
+PURPLE='\033[0;35m'
+NC='\033[0m'
 
-if [[ -z "$ROOT_DIR" || -z "$TTFS_DIR" ]]; then
-    echo "Usage: $0 <START_DIR> <TTFS_DIR>"
+function log() {
+    echo -e "${GREEN}$1${NC}"
+}
+
+function info() {
+    echo -e "${BLUE}$1${NC}"
+}
+
+function msg() {
+    echo -e "${YELLOW}$1${NC}"
+}
+
+function warn() {
+    echo -e "${PURPLE}$1${NC}"
+}
+
+function error() {
+    echo -e "${RED}$1${NC}"
+}
+
+
+
+# BASIC CHECKS
+if ! [ `which jpegoptim` ]; then
+    error "Please install jpegoptim"
     exit 1
 fi
 
-# Remove trailing slash if present
-ROOT_DIR="${ROOT_DIR%/}"
+if ! [ `which pngquant` ]; then
+    error "Please install pngquant"
+    exit 1
+fi
+
+if ! [ `which mogrify` ]; then
+    error "Please install imagemagick"
+    exit 1
+fi
+
+if ! [ `which ffmpeg` ]; then
+    error "Please install ffmpeg"
+    exit 1
+fi
+
+if [[ $# -eq 0 ]]; then
+    error "Usage: $0 <START_DIR> <TTFS_DIR>"
+    exit 0
+fi
+
+
+
+# CHECKING DIRECTORIES
+ROOT_DIR="$1"
+TTFS_DIR="$2"
+
+ROOT_DIR="${ROOT_DIR%/}"                # remove trailing slash if present
 TTFS_DIR="${TTFS_DIR%/}"
 
-# Resolve path to ttfs.sh (same dir as this script)
+if [[ ! -d "$ROOT_DIR" ]]; then
+  error "Error: Directory '$ROOT_DIR' not found"
+  exit 1
+fi
+
+if [[ ! -d "$TTFS_DIR" ]]; then
+  error "Error: Directory '$TTFS_DIR' not found"
+  exit 1
+fi
+
+ROOT_DIR="$(cd "$ROOT_DIR" && pwd)"     # convert to absolute path
+TTFS_DIR="$(cd "$TTFS_DIR" && pwd)"
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-TTFS="$SCRIPT_DIR/ttfs.sh"
-JPEG_OPT="$SCRIPT_DIR/jpeg-optimizer.sh"
-MPEG_OPT="$SCRIPT_DIR/mpeg-optimizer.sh"
+TTFS="$SCRIPT_DIR/ttfs.sh"              # resolve path to ttfs.sh (same dir as this script)
 
-# Convert ROOT_DIR to absolute path
-ROOT_DIR_abs="$(cd "$ROOT_DIR" && pwd)"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Script paths
-MPEG_OPT="/path/to/your/mpeg-optimizer.sh"
-IMAGE_OPT="/path/to/your/image-optimizer.sh"
-ROOT_DIR_abs="/path/to/your/directory"
-
-echo "Starting media optimization in: $ROOT_DIR_abs"
-
-# Process video files
-echo "=== VIDEO OPTIMIZATION ==="
-echo "Collecting video files..."
-
-video_files=()
-while IFS= read -r -d '' file; do
-    video_files+=("$file")
-done < <(find "$ROOT_DIR_abs" -type f \( -name "*.avi" -o -name "*.mp4" -o -name "*.mpg" -o -name "*.mov" -o -name "*.mkv" -o -name "*.flv" -o -name "*.webm" \) -print0)
-
-echo "Found ${#video_files[@]} video files."
-
-if [ ${#video_files[@]} -gt 0 ]; then
-    echo "Starting video optimization..."
-    "$MPEG_OPT" "${video_files[@]}"
-else
-    echo "No video files found to process."
+if [[ ! -x "$TTFS" ]]; then
+  error "Error: script '$TTFS' not found or is not executable"
+  exit 1
 fi
 
-echo
-
-# Process image files
-echo "=== IMAGE OPTIMIZATION ==="
-echo "Collecting image files..."
-
-image_files=()
-while IFS= read -r -d '' file; do
-    image_files+=("$file")
-done < <(find "$ROOT_DIR_abs" -type f \( -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" \) -print0)
-
-echo "Found ${#image_files[@]} image files."
-
-if [ ${#image_files[@]} -gt 0 ]; then
-    echo "Starting image optimization..."
-    "$IMAGE_OPT" "${image_files[@]}"
-else
-    echo "No image files found to process."
-fi
-
-echo
-echo "=== OPTIMIZATION COMPLETE ==="
-echo "Processed:"
-echo "  - ${#video_files[@]} video files"
-echo "  - ${#image_files[@]} image files"
 
 
-# Step 1: Collect all files into an array
+# STEP 1: collect all files into an array (to avoid possible issues in working directory)
 files=()
 while IFS= read -r -d '' file; do
     files+=("$file")
-done < <(find "$ROOT_DIR_abs" -type f -print0)
+done < <(find "$ROOT_DIR" -type f -print0)
+if [[ ${#files[@]} -eq 0 ]]; then
+    warn "Success: no new files found"
+    exit 0
+else
+    log "Found ${#files[@]} file(s). Start processing..."
+fi
 
-echo "Found ${#files[@]} files. Starting processing..."
 
-# Step 2: Process the collected files (find is no longer running)
+
+# STEP 2: process the collected files
 for file in "${files[@]}"; do
-    echo "Processing: $file"              
-    dir_path=$(dirname "$file")
-    (cd "$dir_path" && "$MPEG_OPT")
+    echo
+    echo
+    info "Processing: $file"
+    
+    # compress photo and video files
+    shopt -s nocasematch
+    extension="${file##*.}"
+    case "$extension" in
+      mp4|mov|avi|mkv|wmv|flv|webm|mpg)
+        info "Compressing video file..."
+        echo "Converting: $file -> $file.$extension"
+        ffmpeg -i "$file" -map_metadata 0 "$file.$extension" # "-map_metadata 0" keeps metadata
+        mv -f "$file.$extension" "$file"
+        ;;
+      jpg|jpeg)
+        info "Compressing JPEG file..."
+        jpegoptim -m25 "$file"
+        ;;
+      png)
+        info "Compressing PNG file..."
+        mogrify -verbose -quality 25 "$file" && pngquant "$file" --ext .png --force
+        ;;
+      *)
+        echo "No compression done"
+        ;;
+    esac
+    shopt -u nocasematch
+    
+    # creating tags from directory path
+    rel_path="${file#$ROOT_DIR/}"     # relative path to ROOT_DIR
+    rel_dir=$(dirname "$rel_path")    # directory part of relative path
+    if [[ "$rel_dir" == "." ]]; then
+        tags="none"
+    else
+        tags="${rel_dir//\//-}"       # replace / with -
+    fi
+
+    "$TTFS" --tags "$tags" --extract-ts --out "$TTFS_DIR" "$file"
 done
 
-NEXT: uncomment this:
-# # Traverse files safely
-# find "$ROOT_DIR_abs" -type f -print0 | while IFS= read -r -d '' file; do
-#     echo "Found: $file"
-
-#     #dir_path=$(dirname "$file")
-#     dir_path=$(realpath "$(dirname "$file")")
-
-#     # # Relative path to ROOT_DIR
-#     # rel_path="${file#$ROOT_DIR_abs/}"
-
-#     # # Directory part of relative path
-#     # rel_dir=$(dirname "$rel_path")
-
-#     # # Normalize directory: replace / with -
-#     # if [[ "$rel_dir" == "." ]]; then
-#     #     norm_dir="none"
-#     # else
-#     #     norm_dir="${rel_dir//\//-}"
-#     # fi
-
-#     # Call ttfs.sh safely with absolute file path
-#     (cd "$dir_path" && "$MPEG_OPT")
-#     ##"$TTFS" --tags "$norm_dir" --extract-ts --out "$TTFS_DIR" "$file"
-# done
-
+warn "Success: ttfsd.sh: ${#files[@]} file(s) completed"

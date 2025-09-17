@@ -1,20 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ ! $(command -v jpegoptim) ]]; then
-  echo "Please install jpegoptim"
-  exit
-fi
+function require() {
+    local cmd="$1"
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "Error: required command '$cmd' not found in PATH ($PATH)"
+        echo "Pleae install jpegoptim, pngquant and imagemagick"
+        exit 1
+    fi
+}
 
-if [[ ! $(command -v pngquant) ]]; then
-  echo "Please install pngquant"
-  exit
-fi
-
-if [[ ! $(command -v mogrify) ]]; then
-  echo "Please install imagemagick"
-  exit
-fi
+require jpegoptim
+require pngquant
+require mogrify
 
 shopt -s nocaseglob           # case-insensitive
 jpegoptim -m25 *.jpg  2>/dev/null

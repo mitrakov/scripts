@@ -2,8 +2,7 @@
 set -euo pipefail
 
 # cron path
-PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
-export PATH
+export PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 # Logger
 RED='\033[0;31m'
@@ -39,7 +38,7 @@ function error() {
 function require() {
     local cmd="$1"
     if ! command -v "$cmd" >/dev/null 2>&1; then
-        error "Error: required command '$cmd' not found in PATH ($PATH)" >&2
+        error "Error: required command '$cmd' not found in PATH ($PATH)"
         exit 1
     fi
 }

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# cron path
+PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+export PATH
+
 # Logger
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -32,25 +36,18 @@ function error() {
 
 
 # BASIC CHECKS
-if ! [ `which jpegoptim` ]; then
-    error "Please install jpegoptim"
-    exit 1
-fi
+function require() {
+    local cmd="$1"
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        error "Error: required command '$cmd' not found in PATH ($PATH)" >&2
+        exit 1
+    fi
+}
 
-if ! [ `which pngquant` ]; then
-    error "Please install pngquant"
-    exit 1
-fi
-
-if ! [ `which mogrify` ]; then
-    error "Please install imagemagick"
-    exit 1
-fi
-
-if ! [ `which ffmpeg` ]; then
-    error "Please install ffmpeg"
-    exit 1
-fi
+require jpegoptim
+require pngquant
+require mogrify
+require ffmpeg
 
 if [[ $# -eq 0 ]]; then
     error "Usage: $0 <START_DIR> <TTFS_DIR>"

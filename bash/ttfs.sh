@@ -168,14 +168,21 @@ function handle_file() {
     if [[ $EXTRACT_DATETIME == true ]]; then
         local exif_data=$(exif --machine-readable --tag 0x9003 "$filename" 2>/dev/null || \
                           exif --machine-readable --tag 0x0132 "$filename" 2>/dev/null)
-        if [[ -n "$exif_data" ]]; then
+        if [[ -n $exif_data && $exif_data != "0000:00:00 00:00:00" ]]; then
             now=$(date -j -f "%Y:%m:%d %H:%M:%S" "$exif_data" +%Y-%m-%d-%H-%M-%S) # TODO Linux: date -d"${d//:/-}" +"%Y-%m-%d-%H-%M-%S"
             log "Extracted original photo creation time: $now"
         else
+            if [[ $exif_data == "0000:00:00 00:00:00" ]]; then
+                echo "Date is $exif_data, which if probably wrong..."
+            fi
             echo "Cannot extract photo creation time for: $filename"
             local video_data=$(ffprobe -v quiet -show_entries format_tags=creation_time -of default=noprint_wrappers=1:nokey=1 "$filename")
             if [[ -n "$video_data" ]]; then
-                now=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$video_data" +%Y-%m-%d-%H-%M-%S)
+                if [[ "$video_data" =~ .*T.* ]]; then
+                    now=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$video_data" +%Y-%m-%d-%H-%M-%S)
+                else
+                    now=$(date -j -f "%Y-%m-%d %H:%M:%S" "$video_data" +%Y-%m-%d-%H-%M-%S)
+                fi
                 log "Extracted original video creation time: $now"
             else
                 echo "Cannot extract video creation time for: $filename"
@@ -249,7 +256,7 @@ function main() {
 
 # Main program
 msg "TTFS"
-echo "  Files and folders:     $@"
+echo "  Files and folders:     $*"
 echo "  --tags:                $TAGS"
 echo "  --out:                 $OUT_DIR"
 echo "  --extract-ts:          $EXTRACT_DATETIME"

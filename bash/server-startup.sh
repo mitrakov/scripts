@@ -9,6 +9,6 @@
 # openvpn image works on Debian 11; does not work on Centos 9
 
 docker-compose up -d
-docker run --rm -d --name fileserver -v /root/fileserver-data:/web -p 80:8080 halverneus/static-file-server
-docker run --rm -d --name tommyserver -e DB_PASSWORD=541888 -e SECRET_KEY=unused -p 9090:8080 mitrakov/tommy-server:1.4.18
-docker run --rm -d --name openvpn --cap-add=NET_ADMIN -it -p 1194:1194/udp -p 81:8080/tcp -e HOST_ADDR=mitrakoff.com alekslitvinenk/openvpn
+docker run --rm --detach --name fileserver --publish 80:80 --volume $HOME/uploads:/uploads mitrakov/uploadserver:1.0.0
+docker run --rm --detach --name tommyserver -e DB_PASSWORD=541888 -e SECRET_KEY=unused -p 9090:8080 mitrakov/tommy-server:1.4.18
+docker run --rm --detach --name openvpn --cap-add=NET_ADMIN -it -p 1194:1194/udp -p 81:8080/tcp -e HOST_ADDR=mitrakoff.com alekslitvinenk/openvpn

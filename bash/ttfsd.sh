@@ -13,34 +13,30 @@ PURPLE='\033[0;35m'
 NC='\033[0m'
 
 function log() {
-    echo -e "${GREEN}$1${NC}"
+  echo -e "${GREEN}$1${NC}"
 }
-
 function info() {
-    echo -e "${BLUE}$1${NC}"
+  echo -e "${BLUE}$1${NC}"
 }
-
 function msg() {
-    echo -e "${YELLOW}$1${NC}"
+  echo -e "${YELLOW}$1${NC}"
 }
-
 function warn() {
-    echo -e "${PURPLE}$1${NC}"
+  echo -e "${PURPLE}$1${NC}"
 }
-
 function error() {
-    echo -e "${RED}$1${NC}"
+  echo -e "${RED}$1${NC}"
 }
 
 
 
 # BASIC CHECKS
 function require() {
-    local cmd="$1"
-    if ! command -v "$cmd" >/dev/null 2>&1; then
-        error "Error: required command '$cmd' not found in PATH ($PATH)"
-        exit 1
-    fi
+  local cmd="$1"
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    error "Error: required command '$cmd' not found in PATH ($PATH)"
+    exit 1
+  fi
 }
 
 require jpegoptim
@@ -49,8 +45,8 @@ require mogrify
 require ffmpeg
 
 if [[ $# -eq 0 ]]; then
-    error "Usage: $0 <START_DIR> <TTFS_DIR>"
-    exit 0
+  error "Usage: $0 <START_DIR> <TTFS_DIR>"
+  exit 0
 fi
 
 
@@ -88,57 +84,56 @@ fi
 # STEP 1: collect all files into an array (to avoid possible issues in working directory)
 files=()
 while IFS= read -r -d '' file; do
-    files+=("$file")
+  files+=("$file")
 done < <(find "$ROOT_DIR" -type f -print0)
+
 if [[ ${#files[@]} -eq 0 ]]; then
-    warn "Success: no new files found"
-    exit 0
+  warn "Success: no new files found"
+  exit 0
 else
-    log "Found ${#files[@]} file(s). Start processing..."
+  log "Found ${#files[@]} file(s). Start processing..."
 fi
 
 
 
 # STEP 2: process the collected files
 for file in "${files[@]}"; do
-    echo
-    echo
-    info "Processing: $file"
-    
-    # compress photo and video files
-    shopt -s nocasematch
-    extension="${file##*.}"
-    case "$extension" in
-      mp4|mov|avi|mkv|wmv|flv|webm|mpg)
-        info "Compressing video file..."
-        echo "Converting: $file -> $file.$extension"
-        ffmpeg -i "$file" -map_metadata 0 "$file.$extension" # "-map_metadata 0" keeps metadata
-        mv -f "$file.$extension" "$file"
-        ;;
-      jpg|jpeg)
-        info "Compressing JPEG file..."
-        jpegoptim -m25 "$file"
-        ;;
-      png)
-        info "Compressing PNG file..."
-        mogrify -verbose -quality 25 "$file" && pngquant "$file" --ext .png --force
-        ;;
-      *)
-        echo "No compression done"
-        ;;
-    esac
-    shopt -u nocasematch
-    
-    # creating tags from directory path
-    rel_path="${file#$ROOT_DIR/}"     # relative path to ROOT_DIR
-    rel_dir=$(dirname "$rel_path")    # directory part of relative path
-    if [[ "$rel_dir" == "." ]]; then
-        tags="none"
-    else
-        tags="${rel_dir//\//-}"       # replace / with -
-    fi
+  info "\n\nProcessing: $file"
 
-    "$TTFS" --tags "$tags" --extract-ts --out "$TTFS_DIR" "$file"
+  # compress photo and video files
+  shopt -s nocasematch
+  extension="${file##*.}"
+  case "$extension" in
+    mp4|mov|avi|mkv|wmv|flv|webm|mpg)
+      info "Compressing video file..."
+      echo "Converting: $file -> $file.$extension"
+      ffmpeg -i "$file" -map_metadata 0 "$file.$extension" # "-map_metadata 0" keeps metadata
+      mv -f "$file.$extension" "$file"
+      ;;
+    jpg|jpeg)
+      info "Compressing JPEG file..."
+      jpegoptim -m25 "$file"
+      ;;
+    png)
+      info "Compressing PNG file..."
+      mogrify -verbose -quality 25 "$file" && pngquant "$file" --ext .png --force
+      ;;
+    *)
+      echo "No compression done"
+      ;;
+  esac
+  shopt -u nocasematch
+
+  # creating tags from directory path
+  rel_path="${file#$ROOT_DIR/}"     # relative path to ROOT_DIR
+  rel_dir=$(dirname "$rel_path")    # directory part of relative path
+  if [[ "$rel_dir" == "." ]]; then
+    tags="none"
+  else
+    tags="${rel_dir//\//-}"       # replace / with -
+  fi
+
+  "$TTFS" --tags "$tags" --extract-ts --out "$TTFS_DIR" "$file"
 done
 
 warn "Success: ttfsd.sh: ${#files[@]} file(s) completed"

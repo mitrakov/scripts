@@ -2,11 +2,11 @@
 set -euo pipefail
 
 function require() {
-    local cmd="$1"
-    if ! command -v "$cmd" >/dev/null 2>&1; then
-        echo "Error: required command '$cmd' not found in PATH ($PATH)"
-        exit 1
-    fi
+  local cmd="$1"
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "Error: required command '$cmd' not found in PATH ($PATH)"
+    exit 1
+  fi
 }
 
 require ffmpeg

@@ -154,7 +154,7 @@ function handle_file() {
 
   # sleep
   if [[ $QUICK == true ]]; then
-    sleep 0.2
+    sleep 0.1
   else
     sleep 1
   fi

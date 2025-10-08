@@ -28,7 +28,7 @@ cat <<EOF >build.sbt
 name := "$NAME"
 organization := "$PACKAGE"
 version := "1.0.0"
-scalaVersion := "2.13.7"
+scalaVersion := "2.13.16"
 
 libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.4.2",

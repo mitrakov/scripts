@@ -5,6 +5,8 @@ if [[ $# -ne 2 ]]; then
   exit 1
 fi
 
+COUNT=0
+
 rename_all() {
   local from="$1"
   local to="$2"
@@ -13,7 +15,10 @@ rename_all() {
     [ -e "$f" ] || continue           # skip if no match
     local new="${f//$from/$to}"
     mv -v -- "$f" "$new"
+    COUNT=$((COUNT + 1))
   done
+
+  echo "SUCCESS. $COUNT replacement(s) done."
 }
 
 rename_all "$@"
@@ -25,6 +30,6 @@ rename_all "$@"
 # r       Rename all files
 #         SUBSTR=%{Enter a substring:}
 #         REPLACEMENT=%{Enter a replacement:}
-#         renamer.sh $SUBSTR $REPLACEMENT %s
+#         renamer.sh $SUBSTR $REPLACEMENT
 # 
 # Usage: F2

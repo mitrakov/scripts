@@ -19,6 +19,7 @@ rename_all() {
   done
 
   echo "SUCCESS. $COUNT replacement(s) done."
+  sleep 3
 }
 
 rename_all "$@"

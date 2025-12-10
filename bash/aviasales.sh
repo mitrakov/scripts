@@ -1,6 +1,8 @@
 #!/bin/bash
 # cron example every 3h (except night): 0 10-23/3 * * * /Users/director/workspace/scripts/bash/aviasales.sh
 
+iphone=doNlx3yunEdpkWca-e3Q7a:APA91bE1ATqZDTuRbl9PMSSgv4tscV_aOZ0K6gBTCItPhBwj2vYznS8dPxxgjWuh4AXKnCTfeXWJS7WLwVxdrAFXrQVtpn7P-6aBpmC2EuZK2mUmT8sWuhc
+
 resp=`curl 'https://ariadne.aviasales.ru/api/gql' \
 --header 'Content-Type: application/json' \
 --data '{
@@ -34,4 +36,4 @@ resp=`curl 'https://ariadne.aviasales.ru/api/gql' \
 # -c = compact
 json=`echo $resp | jq -c '.data.price_chart_v3.prices.[].price | {date: .depart_date, rub: .value}'`
 
-java -jar /Users/director/software/tommypush.jar /Users/director/software/firebase.json "Tommy Phuket Script" "$json" fp_SZm2UPEZzj1yBihN5KN:APA91bF16zMlXvnwGvrch-tVOVqz8-EgLAqv33eBxeHJCLiTB6PjY4rj4W9lGZvBYRSEU-1Ea2ew4lB14lVmgRUGQw5SVY7iFlrRf1zCfoNPLym__eR71EE
+java -jar /Users/director/software/tommypush.jar /Users/director/software/firebase.json "Tommy Phuket Script" "$json" "$iphone"

@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 if [[ $# -ne 2 ]]; then
   echo "Usage: $0 substr replacement"

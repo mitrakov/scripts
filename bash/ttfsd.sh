@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# cron example every 2 min: */2 * * * * /Users/director/workspace/scripts/bash/ttfsd.sh /Users/director/Yandex.Disk.localized/ttfsd /Users/director/Yandex.Disk.localized/ttfs
 set -euo pipefail
 
 # cron path
@@ -39,10 +40,11 @@ function require() {
   fi
 }
 
-require jpegoptim
-require pngquant
-require mogrify
-require ffmpeg
+require jpegoptim     # brew install jpegoptim;   dnf install epel-release && dnf install jpegoptim
+require pngquant      # brew install pngquant;    dnf install pngquant
+require mogrify       # brew install imagemagick; dnf install ImageMagick
+require ffmpeg        # brew install ffmpeg;      dnf install ffmpeg-free
+# openh264-2.3.1-1.el9.x86_64.rpm can be found on https://mirror.vcu.edu/pub/gnu_linux/epel-archive/openh264/epel/9/x86_64/os/Packages/o/
 
 if [[ $# -eq 0 ]]; then
   error "Usage: $0 <START_DIR> <TTFS_DIR>"

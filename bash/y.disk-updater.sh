@@ -1,5 +1,5 @@
-#!/bin/bash
-# cron example: */1 * * * * /root/y.disk-updater.sh /root/yandex-disk/sync /root/yandex-disk/db
+#!/usr/bin/env bash
+# cron example every 2 min: */2 * * * * /root/y.disk-updater.sh /root/yandex-disk/sync /root/yandex-disk/db
 set -euo pipefail
 
 # Logger

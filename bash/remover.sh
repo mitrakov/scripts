@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
+
 TO_DIR=/Users/director/papelera
 
 if [[ $# -eq 0 ]]; then

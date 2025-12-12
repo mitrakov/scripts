@@ -1,6 +1,5 @@
-#!/bin/bash
-clear
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # checking environment
 if ! [ `which java` ]; then

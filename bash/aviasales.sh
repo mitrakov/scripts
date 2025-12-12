@@ -1,5 +1,6 @@
-#!/bin/bash
-# cron example every 3h (except night): 0 8-22/3 * * * /root/firebase/aviasales.sh
+#!/usr/bin/env bash
+# cron example every 2h (except night): 0 8-22/2 * * * /root/firebase/aviasales.sh
+set -euo pipefail
 
 iphone=doNlx3yunEdpkWca-e3Q7a:APA91bE1ATqZDTuRbl9PMSSgv4tscV_aOZ0K6gBTCItPhBwj2vYznS8dPxxgjWuh4AXKnCTfeXWJS7WLwVxdrAFXrQVtpn7P-6aBpmC2EuZK2mUmT8sWuhc
 

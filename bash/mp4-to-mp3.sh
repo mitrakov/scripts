@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 if ! [ `which ffmpeg` ]; then
   echo "Please install ffmpeg"

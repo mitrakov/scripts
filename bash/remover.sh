@@ -2,6 +2,7 @@
 set -euo pipefail
 
 TO_DIR=/Users/director/papelera
+mkdir -p $TO_DIR
 
 if [[ $# -eq 0 ]]; then
   echo "Usage: $0 files-to-delete..."

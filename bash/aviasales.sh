@@ -2,7 +2,7 @@
 # cron example every 2h (except night): 0 8-22/2 * * * /root/firebase/aviasales.sh
 set -euo pipefail
 
-iphone=doNlx3yunEdpkWca-e3Q7a:APA91bE1ATqZDTuRbl9PMSSgv4tscV_aOZ0K6gBTCItPhBwj2vYznS8dPxxgjWuh4AXKnCTfeXWJS7WLwVxdrAFXrQVtpn7P-6aBpmC2EuZK2mUmT8sWuhc
+iphone=dI1PfU1hH06bvPkUm2WiwK:APA91bF31ZVVXlf1yG3nc0IcFJNbHg-s7bUqZDhoApNv4EdRBtjxqmejSG7_8EWjXOuX76-X-z94dypdv3HCMuIgw4nYrCcaowcUnRU6CCk63XoRFUNIYfA
 
 resp=`curl 'https://ariadne.aviasales.ru/api/gql' \
 --header 'Content-Type: application/json' \
@@ -37,4 +37,4 @@ resp=`curl 'https://ariadne.aviasales.ru/api/gql' \
 # -c = compact
 json=`echo $resp | jq -c '.data.price_chart_v3.prices.[].price | {date: .depart_date, rub: .value}'`
 
-java -jar /root/firebase/tommypush.jar /root/firebase/firebase.json "Tommy Phuket Script" "$json" "$iphone"
+java -jar /root/tommypush/tommypush.jar /root/firebase/firebase.json "Tommy Phuket Script" "$json" "$iphone"

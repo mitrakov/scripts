@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TO_DIR=/Users/director/papelera
+TO_DIR=/Users/tommy/papelera
 mkdir -p $TO_DIR
 
 if [[ $# -eq 0 ]]; then

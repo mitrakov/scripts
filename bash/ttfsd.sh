@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# cron example every 2 min: */2 * * * * /Users/director/workspace/scripts/bash/ttfsd.sh /Users/director/Yandex.Disk.localized/ttfsd /Users/director/Yandex.Disk.localized/ttfs
+# cron example every 2 min: */2 * * * * /Users/tommy/workspace/scripts/bash/ttfsd.sh /Users/tommy/Yandex.Disk.localized/ttfsd /Users/tommy/Yandex.Disk.localized/ttfs
 set -euo pipefail
 
 # cron path

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deprecated; there is a bug on iOS
+# deprecated; there is a bug in Y.Disk app for iOS; now WebDAV is being used.
 # cron example every 2 min: */2 * * * * /root/y.disk-updater.sh /root/yandex-disk/sync /root/yandex-disk/db
 set -euo pipefail
 

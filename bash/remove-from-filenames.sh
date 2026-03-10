@@ -35,12 +35,12 @@ for file in *; do
     if [ -f "$file" ]; then
         # Get the filename without the first N characters
         newname="${file:$N}"
-        
+
         # Check if the new name would be different and not empty
         if [ "$newname" != "$file" ] && [ -n "$newname" ]; then
             # Check if a file with the new name already exists
             if [ ! -e "$newname" ]; then
-                mv -v "$file" "$newname"
+                mv -vi "$file" "$newname"
             else
                 echo "Warning: '$newname' already exists. Skipping '$file'"
             fi

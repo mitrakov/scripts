@@ -15,12 +15,12 @@ rename_all() {
   for f in *"$from"*; do
     [ -e "$f" ] || continue           # skip if no match
     local new="${f//$from/$to}"
-    mv -v -- "$f" "$new"
+    mv -vi -- "$f" "$new"
     COUNT=$((COUNT + 1))
   done
 
   echo "SUCCESS. $COUNT replacement(s) done."
-  sleep 3
+  sleep 2
 }
 
 rename_all "$@"
@@ -32,6 +32,6 @@ rename_all "$@"
 # r       Rename all files
 #         SUBSTR=%{Enter a substring:}
 #         REPLACEMENT=%{Enter a replacement:}
-#         renamer.sh $SUBSTR $REPLACEMENT
+#         renamer.sh "$SUBSTR" "$REPLACEMENT"
 # 
 # Usage: F2

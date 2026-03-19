@@ -1,0 +1,8 @@
+# docker build --tag mitrakov/y-music:1.0.0 .
+FROM python:3.11-slim
+
+RUN mkdir app && pip install -U https://github.com/llistochek/yandex-music-downloader/archive/main.zip
+
+COPY entrypoint.sh .
+
+ENTRYPOINT ["./entrypoint.sh"]

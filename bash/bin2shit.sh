@@ -2,18 +2,16 @@
 # by: mitrakov-artem@yandex.ru
 set -euo pipefail
 
+# top 2000 english words containing up to 3 chars
 WORDS=(
-    a i ad am an as at be by do ed ex go he hi if in is it me my no of oh ok on or ox pi so to up us we
-    act add age ago aid aim air all and ant any ape apt arc are arm art ash ask ate awe axe bad bag
-    ban bar bat bay bed bee beg bet bid big bin bit boa bob bog bow box boy bud bug bun bus but buy
-    bye cab can cap car cat caw cob cod cog con cop cot cow coy cry cub cue cup cut dab dad dam day
-    den dew did die dig dim din dip dog dot dry dub due dug dye ear eat ebb egg ego elk elm end era
-    eve eye fan far fat fed fee few fig fin fir fit fix fly fog for fox fry fun fur gap gas gel gem
-    get gig gin god got gum gun guy gym had ham has hat hay hem hen her hey hid him hip his hit hog
-    hop hot how hub hug hum hut ice ill imp ink inn ion its ivy jam jar jaw jet jig job jog joy jug
-    kept key kid kin kit lab lad lag lap law lax lay led leg let lid lie lip lit log lot low mad man
-    map mat may men met mid mix mob mom mud mug nab nag nap net new nil nip nod nor not now nut oak
-    oat odd off oil old one
+    be am are is was I you the a an to it not and of do did had has we in get got my me go oh can no on for all so he but out up
+    say now at one hey see saw if how she guy let her uh um him why who as our yes man men his us or OK way too by day two God
+    off big try dad kid boy put bad any Mr use mom may hi new lot ask hmm hm met huh old wow eat ate run ran car ah aah job fun
+    buy son sit sat own dog die sir sex pay hot win won eye aw hit yet ten ass gay few ow yow lie lay ago end its ha hah fat cut
+    bit bed six set bar bye box bet tho Mrs cat hat mm cry act eh god bag shh sh key red yep mad ice war fly top far leg air gun
+    ahh fix ugh hid sad pie ho law egg art arm bus age yay fan owe led pee cup cop pig Jew rid Ms Mss pop cow ear toy Net fit gas
+    ew eww fed ma tea cab pen sea yo add low nah rat tie sun dig dug tip rip pal gee gym wet beg uhh sox gum mix hoo lip oil bra
+    tax nut sue pot due rub sky lab row hug van tub ad ads bee dry toe hip pet bum bug nap tag per ton odd
 )
 
 function encode() {

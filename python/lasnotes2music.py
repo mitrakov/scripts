@@ -12,8 +12,8 @@ APP_PATH = "/Applications/Las Notes.app/Contents/MacOS/Las Notes"
 def run_docker(ids, token):
     if os.path.exists(LINKS_FILE):
         command = [
-            "docker", "run", "--rm", 
-            "--env", "YANDEX_TOKEN={token}",
+            "/usr/local/bin/docker", "run", "--rm",
+            "--env", f"YANDEX_TOKEN={token}",
             "--volume", "/Users/tommy/Downloads:/app", 
             "mitrakov/y-music:1.0.0"
         ]
@@ -22,14 +22,14 @@ def run_docker(ids, token):
             if result.returncode != 0:
                 print(f"Error: Docker command failed with code {result.returncode}")
                 return
-            
+
             # Docker finished successfully, now clean up
             os.remove(LINKS_FILE)
             remove_notes(ids)
             print("Process completed and notes removed successfully!")
         except Exception as e: 
             print(f"Error during Docker execution: {e}")
-    else: 
+    else:
         print(f"File not found: {LINKS_FILE}")
 
 def remove_notes(ids):

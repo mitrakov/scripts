@@ -156,7 +156,7 @@ function handle_file() {
   if [[ $QUICK == true ]]; then
     sleep 0.1
   else
-    sleep 1
+    sleep 0.5
   fi
 
   # date-time

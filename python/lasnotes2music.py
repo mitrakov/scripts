@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# takes new music from Las Notes, and downloads it from Yandex.Music
 import os
 import sys
 import json
@@ -60,7 +61,7 @@ def extract_links(token):
         if result.returncode != 0:
             print(f"Error: Search command failed with code {result.returncode}")
             return
-        
+
         data = json.loads(result.stdout)
 
         if data.get("status") == "ok":

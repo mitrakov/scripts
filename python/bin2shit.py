@@ -32,9 +32,9 @@ if __name__ == "__main__":
     group.add_argument("-e", action="store_true", help="Encode file")
     group.add_argument("-d", action="store_true", help="Decode file")
     parser.add_argument("file", help="Input file path")
-    
+
     args = parser.parse_args()
-    
+
     if args.e:
         encode(args.file)
     else:

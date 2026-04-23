@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# removes extra tabs and spaces from input
 import sys
 import re
 

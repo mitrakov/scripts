@@ -10,7 +10,7 @@ if [[ $# -eq 0 ]]; then
 fi
 
 remove_all() {
-  mv -v -- "$1" "$TO_DIR"
+  mv -v -- "$@" "$TO_DIR"
 }
 
 remove_all "$@"

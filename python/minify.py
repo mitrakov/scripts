@@ -14,7 +14,7 @@ def main():
         else:
             print("Error: No input detected via stdin.", file=sys.stderr)
     else:
-        print("Usage: cat file.txt | python script.py")
+        print("Usage: cat file.txt | minify.py")
 
 if __name__ == "__main__":
     main()

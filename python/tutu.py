@@ -4,35 +4,12 @@ import sys
 
 """
 # Helps to find tickets from https://tutu.ru
+
 curl 'https://offers-api.tutu.ru/railway/offers' --compressed --data-raw '{
   "routes": [{"departureStationCode": "2000000", "arrivalStationCode": "2004000", "departureDate": "2026-07-24"}],
   "source": "trainOffers"
-}' | ./tutu.py
+}' | tutu.py
 """
-
-def clean_and_trim(data, max_array_items=50):
-    if isinstance(data, dict):
-        cleaned_dict = {}
-        for key, value in data.items():
-            processed_value = clean_and_trim(value, max_array_items)
-            if processed_value in (None, "", {}, []):
-                continue
-            cleaned_dict[key] = processed_value
-        return cleaned_dict if cleaned_dict else None
-
-    elif isinstance(data, list):
-        cleaned_list = []
-        for item in data[:max_array_items]:
-            processed_item = clean_and_trim(item, max_array_items)
-            if processed_item in (None, "", {}, []):
-                continue
-            cleaned_list.append(processed_item)
-        return cleaned_list if cleaned_list else None
-
-    else:
-        if data is None or data == "":
-            return None
-        return data
 
 def format_duration(minutes):
     """Transforms raw minutes into a human-readable Xh Ym format."""
@@ -153,8 +130,7 @@ def main():
         sys.stderr.write(f"❌ Error: Input stream was not valid JSON: {e}\n")
         sys.exit(1)
 
-    compressed_data = clean_and_trim(raw_json, max_array_items=50)
-    tickets = parse_tutu_payload(compressed_data)
+    tickets = parse_tutu_payload(raw_json)
 
     if not tickets:
         print("❌ No matching ticket outputs recovered from parsed arrays.")

@@ -8,13 +8,13 @@ master = "origin/master"
 git_cmd = [
     "git", "for-each-ref", "refs/remotes/origin",
     "--sort=-committerdate",
-    "--format=%(committerdate:iso8601)|%(authorname)|%(refname:short)"
+    "--format=%(committerdate:iso)|%(authorname)|%(refname:short)"
 ]
-output = subprocess.check_output(git_cmd, text=True)
+output = subprocess.check_output(git_cmd, text=True, encoding='utf-8')
 branches_data = []
 
 # Get list of merged branches
-merged_branches = subprocess.check_output(["git", "branch", "-r", "--merged", master], text=True)
+merged_branches = subprocess.check_output(["git", "branch", "-r", "--merged", master], text=True, encoding='utf-8')
 
 for line in output.strip().split('\n'):
     if not line: continue
@@ -36,11 +36,10 @@ for line in output.strip().split('\n'):
     
     # Categorize status
     status = "Active" if age_days < 90 else ("Stale" if is_merged == "Yes" else "Abandoned")
-
     branches_data.append([branch, clean_date, age_days, author, is_merged, status])
 
 # save to CSV
-with open("git_branch_report.csv", "w", encoding="utf-8") as f:
+with open("git_branch_report.csv", "w", encoding="utf-8", newline="") as f:
     writer = csv.writer(f)
     writer.writerow(["Branch Name", "Last Commit Date", "Age (Days)", "Author", "Merged to Main?", "Suggested Action"])
     writer.writerows(branches_data)

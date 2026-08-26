@@ -18,29 +18,29 @@ merged_branches = subprocess.check_output(["git", "branch", "-r", "--merged", ma
 
 for line in output.strip().split('\n'):
     if not line: continue
-    
+
     # Split using the explicit pipe character we injected
     parts = line.split('|', 2)
     if len(parts) < 3: continue
-    
+
     date_str, author, branch = parts[0], parts[1], parts[2]
-    
+
     # Clean up branch name to remove 'origin/' if present for matching
     short_branch = branch.replace("origin/", "").strip()
     is_merged = "Yes" if short_branch in merged_branches else "No"
-    
+
     # Calculate age safely from the ISO timestamp
     clean_date = date_str.split()[0]
     last_commit_date = datetime.strptime(clean_date, "%Y-%m-%d")
     age_days = (datetime.now() - last_commit_date).days
-    
+
     # Categorize status
     status = "Active" if age_days < 90 else ("Stale" if is_merged == "Yes" else "Abandoned")
     branches_data.append([branch, clean_date, age_days, author, is_merged, status])
 
 # save to CSV
 with open("git_branch_report.csv", "w", encoding="utf-8", newline="") as f:
-    writer = csv.writer(f)
+    writer = csv.writer(f, lineterminator='\n')
     writer.writerow(["Branch Name", "Last Commit Date", "Age (Days)", "Author", f"Merged to {master}", "Status"])
     writer.writerows(branches_data)
 

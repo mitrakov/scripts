@@ -41,7 +41,7 @@ for line in output.strip().split('\n'):
 # save to CSV
 with open("git_branch_report.csv", "w", encoding="utf-8", newline="") as f:
     writer = csv.writer(f)
-    writer.writerow(["Branch Name", "Last Commit Date", "Age (Days)", "Author", "Merged to Main?", "Suggested Action"])
+    writer.writerow(["Branch Name", "Last Commit Date", "Age (Days)", "Author", f"Merged to {master}", "Status"])
     writer.writerows(branches_data)
 
 print("SUCCESS. Generated 'git_branch_report.csv'")
